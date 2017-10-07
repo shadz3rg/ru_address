@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<database>
+    <table id="ADDROBJ">
+        <primary-key field="AOID"/>
+        <foreign-key field="ACTSTATUS" for-table="ACTSTAT" for-field="ACTSTATID"/>
+        <foreign-key field="CENTSTATUS" for-table="CENTERST" for-field="CENTERSTID"/>
+        <foreign-key field="OPERSTATUS" for-table="OPERSTAT" for-field="OPERSTATID"/>
+        <foreign-key field="CURRSTATUS" for-table="CURENST" for-field="CURENSTID"/>
+        <foreign-key field="NORMDOC" for-table="NORMDOC" for-field="NORMDOCID"/>
+        <foreign-key field="AOLEVEL" for-table="SOCRBASE" for-field="LEVEL"/>
+    </table>
+    <table id="CENTERST">
+        <primary-key field="CENTERSTID"/>
+    </table>
+    <table id="OPERSTAT">
+        <primary-key field="OPERSTATID"/>
+    </table>
+    <table id="ACTSTAT">
+        <primary-key field="ACTSTATID"/>
+    </table>
+    <table id="CURENTST">
+        <primary-key field="CURENTSTID"/>
+    </table>
+    <table id="SOCRBASE">
+        <primary-key field="LEVEL"/>
+        <primary-key field="SCNAME"/>
+    </table>
+    <table id="NORDOC">
+        <primary-key field="NORMDOCID"/>
+        <foreign-key field="DOCTYPE" for-table="NDOCTYPE" for-field="NDTYPEID"/>
+    </table>
+    <table id="NDOCTYPE">
+        <primary-key field="NDTYPEID"/>
+    </table>
+	<table id="HOUSE">
+        <primary-key field="HOUSEID"/>
+		<foreign-key field="ESTSTATUS" for-table="ESTSTAT" for-field="ESTSTATID"/>
+		<foreign-key field="NORMDOC" for-table="NORDOC" for-field="NORMDOCID"/>
+		<foreign-key field="STATSTATUS" for-table="HSTSTAT" for-field="HOUSESTID"/>
+		<foreign-key field="STRSTATUS" for-table="STRSTAT" for-field="STRSTATID"/>
+    </table>
+	<table id="STRSTAT">
+        <primary-key field="STRSTATID"/>
+    </table>
+	<table id="HSTSTAT">
+        <primary-key field="HOUSESTID"/>
+    </table>
+	<table id="ESTSTAT">
+        <primary-key field="ESTSTATID"/>
+    </table>
+	<table id="HOUSEINT">
+        <primary-key field="HOUSEINTID"/>
+        <foreign-key field="INTSTATUS" for-table="INTVSTAT" for-field="INTVSTATID"/>
+		<foreign-key field="NORMDOC" for-table="NORDOC" for-field="NORMDOCID"/>
+    </table>
+	<table id="INTVSTAT">
+        <primary-key field="INTVSTATID"/>
+    </table>
+	<table id="LANDMARK">
+        <primary-key field="LANDID"/>
+		<foreign-key field="NORMDOC" for-table="NORDOC" for-field="NORMDOCID"/>
+    </table>
+</database>

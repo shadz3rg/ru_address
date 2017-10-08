@@ -28,10 +28,9 @@ class Converter:
         'STRSTAT'
     ]
 
-    def __init__(self, source, source_path, output):
+    def __init__(self, source, source_path):
         self.source = source
         self.source_path = source_path
-        self.output = output
 
     def get_source_filepath(self, table, extension):
         """ Ищем файл таблицы в папке с исходниками, 
@@ -47,18 +46,16 @@ class Converter:
         else:
             raise FileNotFoundError('Not found source file: {}'.format(file_path))
 
-    def convert_table(self, table, skip_definition, skip_data, batch_size):
+    def convert_table(self, file, table, skip_definition, skip_data, batch_size):
         """ Конвертирует схему и данные таблицы, используя соответствующие XSD и XML файлы. """
         if self.source == self.SOURCE_XML:
-            self._convert_table_xml(table, skip_definition, skip_data, batch_size)
+            self._convert_table_xml(file, table, skip_definition, skip_data, batch_size)
         elif self.source == self.SOURCE_DBF:
-            self._convert_table_dbf(table, skip_definition, skip_data, batch_size)
-            pass
+            self._convert_table_dbf(file, table, skip_definition, skip_data, batch_size)
 
-    def _convert_table_xml(self, table, skip_definition, skip_data, batch_size):
+    def _convert_table_xml(self, file, table, skip_definition, skip_data, batch_size):
         """ Конвертирует схему и данные таблицы, используя соответствующие XSD и XML файлы. """
-        dump_file = self.output.open_dump_file(table)
-        dump_file.write(Converter.get_dump_header())
+        dump_file = file
 
         source_filepath = self.get_source_filepath(table, 'xsd')
         definition = Definition(table, source_filepath)
@@ -84,15 +81,36 @@ class Converter:
         return table_list
 
     @staticmethod
-    def get_dump_header():
+    def get_dump_copyright():
         """ Сообщение в заголовок сгенерированного файла """
         header = ("-- --------------------------------------------------------\n"
-                  "-- v. {}\n"
+                  "-- ver. {}\n"
                   "-- get latest version @ https://github.com/shadz3rg/ru_address\n"
                   "-- file generated {}\n"
-                  "-- --------------------------------------------------------\n")
+                  "-- --------------------------------------------------------\n\n")
         now = datetime.datetime.now()
         return header.format(__version__, str(now))
+
+    @staticmethod
+    def get_dump_header(encoding):
+        """ Подготовка к импорту """
+        header = ("/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n"
+                  "/*!40101 SET NAMES {} */;\n"
+                  "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n"
+                  "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n")
+        return header.format(encoding)
+
+    @staticmethod
+    def get_dump_footer():
+        """ Завершение импорта """
+        footer = ("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;\n"
+                  "/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;\n"
+                  "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;")
+        return footer
+
+    @staticmethod
+    def get_table_separator(table):
+        return ("\n\n-- Table `{}`\n").format(table)
 
 class Output:
     SINGLE_FILE = 0
@@ -101,24 +119,10 @@ class Output:
     def __init__(self, output_path, mode):
         self.output_path = output_path
         self.mode = mode
-        if mode == self.SINGLE_FILE:
-            # Создаем общий для всех таблиц файл
-            # В output_path уже добавлено название файла
-            if os.path.isfile(output_path):
-                raise FileExistsError('File already exist: {}'.format(output_path))
-            filepath = output_path
-            open(filepath, 'x', encoding='utf-8').close()
 
-    def dump_filepath(self, filename, extension):
-        file = '{}.{}'.format(filename, extension)
-        return os.path.join(self.output_path, file)
+    def get_table_filename(self, table):
+        return '{}.{}'.format(table, 'sql')
 
-    def open_dump_file(self, table):
-        filepath = self.dump_filepath(table, 'sql')
-        open_mode = 'w'
-        if self.mode == self.SINGLE_FILE:
-            filepath = self.output_path
-            open_mode = 'a'
-        return open(filepath, open_mode, encoding='utf-8')
-
-
+    def open_dump_file(self, filename):
+        filepath = os.path.join(self.output_path, filename)
+        return open(filepath, 'w', encoding='utf-8')

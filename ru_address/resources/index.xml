@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <database>
+    <table id="ACTSTAT">
+        <primary-key field="ACTSTATID"/>
+        <key field="NAME"/>
+    </table>
     <table id="ADDROBJ">
         <primary-key field="AOID"/>
         <foreign-key field="ACTSTATUS" for-table="ACTSTAT" for-field="ACTSTATID"/>
@@ -9,15 +13,16 @@
         <foreign-key field="NORMDOC" for-table="NORMDOC" for-field="NORMDOCID"/>
         <foreign-key field="AOLEVEL" for-table="SOCRBASE" for-field="LEVEL"/>
     </table>
+
+
+
     <table id="CENTERST">
         <primary-key field="CENTERSTID"/>
     </table>
     <table id="OPERSTAT">
         <primary-key field="OPERSTATID"/>
     </table>
-    <table id="ACTSTAT">
-        <primary-key field="ACTSTATID"/>
-    </table>
+
     <table id="CURENTST">
         <primary-key field="CURENTSTID"/>
     </table>

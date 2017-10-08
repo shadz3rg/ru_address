@@ -20,7 +20,6 @@ class Data:
         parser.setContentHandler(DataHandler(self.table_name, source, dump_file, table_fields, bulk_size))
         parser.parse(source)
 
-        dump_file.close()
         source.close()
 
 
@@ -97,10 +96,6 @@ class DataHandler(sax.ContentHandler):
         print(";", file=self.dump)  # Заканчиваем последний INSERT запрос
         # Вспомогательные запросы на манер бэкапов из phpMyAdmin
         print('/*!40000 ALTER TABLE `{}` ENABLE KEYS */;'.format(self.table_name), file=self.dump)
-        print('/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;', file=self.dump)
-        print('/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;',
-              file=self.dump)
-        print('/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;', file=self.dump, end="")
 
 
 class Definition:

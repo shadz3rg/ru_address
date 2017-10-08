@@ -20,11 +20,14 @@
 		
 			<xsl:choose>
 				<xsl:when test="name(current()) = 'primary-key'">
-					<xsl:text>ADD PRIMARY KEY (`</xsl:text><xsl:value-of select="@field"/><xsl:text>`)</xsl:text>
+					<xsl:text>PRIMARY KEY (`</xsl:text><xsl:value-of select="@field"/><xsl:text>`)</xsl:text>
 				</xsl:when>
 				<xsl:when test="name(current()) = 'foreign-key'">
-					<xsl:text>ADD FOREIGN KEY (`</xsl:text><xsl:value-of select="@field"/><xsl:text>`)</xsl:text>
+					<xsl:text>FOREIGN KEY (`</xsl:text><xsl:value-of select="@field"/><xsl:text>`)</xsl:text>
 					<xsl:text> REFERENCES `</xsl:text><xsl:value-of select="@for-table"/><xsl:text>` (`</xsl:text><xsl:value-of select="@for-field"/><xsl:text>`)</xsl:text>
+				</xsl:when>
+				<xsl:when test="name(current()) = 'key'">
+					<xsl:text>INDEX `</xsl:text><xsl:value-of select="@field"/><xsl:text>` (`</xsl:text><xsl:value-of select="@field"/><xsl:text>`)</xsl:text>
 				</xsl:when>
 			</xsl:choose>
 			
@@ -34,10 +37,7 @@
 			</xsl:if>
 		
 		</xsl:for-each>
-		
-		<!-- End of statement -->
-		<xsl:text>;</xsl:text>
-		
+
 		<xsl:if test="position() != last()">
 			<xsl:text>&#xa;</xsl:text>
 		</xsl:if>

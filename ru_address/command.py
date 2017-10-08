@@ -1,4 +1,5 @@
 import click
+import time
 
 from . import __version__
 from ru_address.converter import Converter
@@ -21,7 +22,8 @@ def cli(join, source, table_list, no_data, no_definition, encoding, source_path,
     """ Подготавливает БД ФИАС для использования с SQL.
     XSD файлы и XML выгрузку можно получить на сайте ФНС https://fias.nalog.ru/Updates.aspx
     """
-    # print(join, table_list, source_path, output_path)
+    start_time = time.time()
+
     process_tables = Converter.TABLE_LIST
     if table_list is not None:
         process_tables = Converter.prepare_table_input(table_list)
@@ -59,3 +61,5 @@ def cli(join, source, table_list, no_data, no_definition, encoding, source_path,
             file.close()
 
     Common.show_memory_usage()
+    time_measure = time.time() - start_time
+    print("{} s".format(round(time_measure, 2)))

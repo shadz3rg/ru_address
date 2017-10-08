@@ -53,13 +53,13 @@ class DataHandler(sax.ContentHandler):
         for field in self.table_fields:
             # SAX автоматически декодирует XML сущности, ломая запрос кавычками, workaround
             # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
-            value = ""
+            value = "NULL"
             if attrs.get(field) is not None:
-                value = attrs.get(field).replace('\\', '\\\\"')
-                value = value.replace('"', '\\"')
+                value = attrs.get(field).replace('\\', '\\\\"').replace('"', '\\"')
+                value = '"{}"'.format(value)
             value_query_parts.append(value)
 
-        value_query = '", "'.join(value_query_parts)
+        value_query = ', '.join(value_query_parts)
 
         # Формируем запрос
         until_new_bulk = self.current_row % self.bulk_size
@@ -77,7 +77,7 @@ class DataHandler(sax.ContentHandler):
             print('INSERT INTO `{}` (`{}`) VALUES '.format(self.table_name, field_query), file=self.dump)
 
         # Данные для вставки, подходящий delimiter ставится у следующей записи
-        print('\t("{}")'.format(value_query), file=self.dump, end="")
+        print('\t({})'.format(value_query), file=self.dump, end="")
 
         self.current_row += 1
 

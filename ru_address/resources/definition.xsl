@@ -15,7 +15,20 @@
 
             <!-- Column Type -->
             <xsl:choose>
-                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:integer'">INT(<xsl:value-of select="xs:simpleType/xs:restriction/xs:totalDigits/@value" />)</xsl:when>
+                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:integer' or xs:simpleType/xs:restriction/@base='xs:int'">
+                    <xsl:text>INT(</xsl:text>
+
+                    <xsl:choose>
+                        <xsl:when test="xs:simpleType/xs:restriction/xs:totalDigits/@value">
+                            <xsl:value-of select="xs:simpleType/xs:restriction/xs:totalDigits/@value" />
+                        </xsl:when>
+                        <xsl:otherwise>
+                             <xsl:text>11</xsl:text>
+                        </xsl:otherwise>
+                    </xsl:choose>
+
+                    <xsl:text>)</xsl:text>
+                </xsl:when>
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:byte'">INT(1)</xsl:when>
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string'"><xsl:text>VARCHAR(</xsl:text>
 

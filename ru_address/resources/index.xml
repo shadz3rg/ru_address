@@ -54,7 +54,6 @@
         <primary-key field="OPERSTATID"/>
     </table>
     <table id="SOCRBASE">
-        <primary-key field="LEVEL"/>
         <key field="SCNAME"/>
     </table>
 	<table id="STRSTAT">

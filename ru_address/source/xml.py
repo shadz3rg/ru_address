@@ -55,7 +55,8 @@ class DataHandler(sax.ContentHandler):
             # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
             value = ""
             if attrs.get(field) is not None:
-                value = attrs.get(field).replace('"', '\\"')
+                value = attrs.get(field).replace('\\', '\\\\"')
+                value = value.replace('"', '\\"')
             value_query_parts.append(value)
 
         value_query = '", "'.join(value_query_parts)

@@ -17,6 +17,7 @@ class Converter:
         'CENTERST',
         'CURENTST',
         'ESTSTAT',
+        'HOUSE',
         'HOUSEINT',
         'HSTSTAT',
         'INTVSTAT',
@@ -24,7 +25,9 @@ class Converter:
         'NDOCTYPE',
         'NORMDOC',
         'OPERSTAT',
+        'ROOM',
         'SOCRBASE',
+        'STEAD',
         'STRSTAT'
     ]
 

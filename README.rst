@@ -51,8 +51,8 @@ ru_address: Конвертация БД ФИАС в SQL дамп
 
   $ ru_address /путь/к/файлам /путь/для/сохранения --join=dump.sql
 
-Только необходимые таблицы:
+С ограниченным списком таблиц (например все таблицы без HOUSE ;)):
 
 ::
 
-  $ ru_address /путь/к/файлам /путь/для/сохранения --table-list=ACTSTAT,ADDROBJ
+  $ ru_address /путь/к/файлам /путь/для/сохранения --table-list=ACTSTAT,ADDROBJ,CENTERST,CURENTST,ESTSTAT,HOUSEINT,HSTSTAT,INTVSTAT,LANDMARK,NDOCTYPE,NORMDOC,OPERSTAT,ROOM,SOCRBASE,STEAD,STRSTAT

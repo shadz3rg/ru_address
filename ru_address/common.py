@@ -1,8 +1,6 @@
 import os
 import re
-import datetime
-
-import math
+import time
 import psutil
 
 
@@ -19,18 +17,19 @@ class Common:
         return " ".join(trigrams)
 
     @staticmethod
-    def clear_keyword(keyword, regex=re.compile("[\s\"'\.,()\-_\\\/]")):
+    def clear_keyword(keyword, regex=re.compile("[\s\"'.,()\-_\\\/]")):
         keyword = regex.sub("_", keyword)
         return keyword.lower()
 
     @staticmethod
-    def update_progress(workdone):
+    def update_progress(progress):
         # Отображает отформатированный прогресс-бар
-        print("\r[{0:50s}] {1:.1f}% ".format('#' * int(workdone * 50), workdone * 100), end="", flush=True)
+        print("\r[{0:50s}] {1:.1f}% ".format('#' * int(progress * 50), progress * 100), end="", flush=True)
 
     @staticmethod
     def cli_output(message):
-        print('[{}] {}'.format(datetime.datetime.now().time().isoformat(timespec='seconds'), message))
+        now = time.strftime("%H:%M:%S")
+        print('[{}] {}'.format(now, message))
 
     @staticmethod
     def show_memory_usage():

@@ -100,9 +100,9 @@ class DataHandler(sax.ContentHandler):
 
 
 class Definition:
-    def __init__(self, table_name, source_filepath):
+    def __init__(self, table_name, source_file):
         self.table_name = table_name
-        self.tree = et.parse(source_filepath)
+        self.tree = et.parse(source_file)
         self.stylesheet_file = os.path.join(package_directory, 'resources', 'definition.xsl')
 
     def get_table_fields(self):

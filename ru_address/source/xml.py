@@ -2,6 +2,7 @@ import math
 import os.path
 import lxml.etree as et
 from xml import sax
+
 from ru_address.common import Common
 from ru_address.common import DataSource
 from ru_address import package_directory
@@ -9,13 +10,12 @@ from ru_address.index import Index
 
 
 class Data:
-    def __init__(self, table_name, source_filepath):
+    def __init__(self, table_name, source_file):
         self.table_name = table_name
-        self.data_source = source_filepath
+        self.data_source = source_file
 
     def convert_and_dump(self, dump_file, table_fields, bulk_size):
         source = DataSource(self.data_source)
-
         parser = sax.make_parser()
         parser.setContentHandler(DataHandler(self.table_name, source, dump_file, table_fields, bulk_size))
         parser.parse(source)
@@ -104,8 +104,10 @@ class Definition:
         self.table_name = table_name
         self.tree = et.parse(source_file)
         self.stylesheet_file = os.path.join(package_directory, 'resources', 'definition.xsl')
+        self.table_fields = self._fetch_table_fields()
+        self.entity_tag = self._fetch_entity_tag()
 
-    def get_table_fields(self):
+    def _fetch_table_fields(self):
         table_fields = []
 
         ns = {'xs': 'http://www.w3.org/2001/XMLSchema'}
@@ -114,6 +116,17 @@ class Definition:
             table_fields.append(table_field_element.attrib["name"])
 
         return table_fields
+
+    def _fetch_entity_tag(self):
+        ns = {'xs': 'http://www.w3.org/2001/XMLSchema'}
+        element = self.tree.find(".//xs:sequence/xs:element", ns)
+        return element.attrib['name']
+
+    def get_table_fields(self):
+        return self.table_fields
+
+    def get_entity_tag(self):
+        return self.entity_tag
 
     def convert_and_dump(self, dump_file):
         stylesheet = et.parse(self.stylesheet_file)

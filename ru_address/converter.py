@@ -31,9 +31,10 @@ class Converter:
         'STRSTAT'
     ]
 
-    def __init__(self, source, source_path):
+    def __init__(self, source, source_path, beta):
         self.source = source
         self.source_path = source_path
+        self.beta = beta
 
     def get_source_filepath(self, table, extension):
         """ Ищем файл таблицы в папке с исходниками, 
@@ -68,7 +69,10 @@ class Converter:
         if skip_data is False:
             source_filepath = self.get_source_filepath(table, 'xml')
             data = Data(table, source_filepath)
-            data.convert_and_dump(dump_file, definition.get_table_fields(), batch_size)
+            if self.beta:
+                data.convert_and_dump_v2(dump_file, definition, batch_size)
+            else:
+                data.convert_and_dump(dump_file, definition, batch_size)
 
     def _convert_table_dbf(self, table, skip_definition, skip_data, batch_size):
         """ Конвертирует схему и данные таблицы, используя соответствующие XSD и DBF файлы. """

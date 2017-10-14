@@ -2,7 +2,6 @@ import math
 import os.path
 import lxml.etree as et
 from xml import sax
-
 from ru_address.common import Common
 from ru_address.common import DataSource
 from ru_address import package_directory
@@ -14,13 +13,71 @@ class Data:
         self.table_name = table_name
         self.data_source = source_file
 
-    def convert_and_dump(self, dump_file, table_fields, bulk_size):
+    def convert_and_dump(self, dump_file, definition, bulk_size):
         source = DataSource(self.data_source)
         parser = sax.make_parser()
-        parser.setContentHandler(DataHandler(self.table_name, source, dump_file, table_fields, bulk_size))
+        parser.setContentHandler(DataHandler(self.table_name, source, dump_file, definition.get_table_fields(), bulk_size))
         parser.parse(source)
 
         source.close()
+
+    def convert_and_dump_v2(self, dump_file, definition, bulk_size):
+
+        # Отключаем ключи перед началом импорта данных
+        print('/*!40000 ALTER TABLE `{}` DISABLE KEYS */;'.format(self.table_name), file=dump_file)
+
+        table_fields = definition.get_table_fields()
+        current_row = 0
+        context = et.iterparse(self.data_source, events=('end',), tag=definition.get_entity_tag())
+
+        for event, elem in context:
+            content = []
+
+            value_query_parts = []
+            for field in table_fields:
+                # SAX автоматически декодирует XML сущности, ломая запрос кавычками, workaround
+                # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
+                value = "NULL"
+                if elem.get(field) is not None:
+                    value = elem.get(field).replace('\\', '\\\\"').replace('"', '\\"')
+                    value = '"%s"' % value
+                value_query_parts.append(value)
+
+            value_query = ', '.join(value_query_parts)
+
+            # Формируем запрос
+            until_new_bulk = current_row % bulk_size
+
+            # Заканчиваем предыдущую строку
+            if current_row != 0:
+                line_ending = ',\n'
+                if until_new_bulk == 0:
+                    line_ending = ';\n'
+                content.append(line_ending)
+
+            # Начинаем новый инсерт, если нужно
+            if current_row == 0 or until_new_bulk == 0:
+                field_query = "`, `".join(table_fields)
+                content.append('INSERT INTO `%s` (`%s`) VALUES \n' % (self.table_name, field_query))
+
+            # Данные для вставки, подходящий delimiter ставится у следующей записи
+            content.append('\t(%s)' % value_query)
+
+            current_row += 1
+            if current_row % 10000 == 0:
+                print("\r%s+ row" % current_row, end="", flush=True)
+
+            dump_file.write(''.join(content))
+
+            elem.clear()
+            while elem.getprevious() is not None:
+                del elem.getparent()[0]
+
+        # Завершаем файл
+        print("")  # Перенос после прогресс-бара
+        print(";", file=dump_file)  # Заканчиваем последний INSERT запрос
+        # Вспомогательные запросы на манер бэкапов из phpMyAdmin
+        print('/*!40000 ALTER TABLE `{}` ENABLE KEYS */;'.format(self.table_name), file=dump_file)
 
 
 class DataHandler(sax.ContentHandler):
@@ -80,6 +137,7 @@ class DataHandler(sax.ContentHandler):
         print('\t({})'.format(value_query), file=self.dump, end="")
 
         self.current_row += 1
+
 
         # Вывод прогресса
         current_percent = math.ceil(self.source.percentage)

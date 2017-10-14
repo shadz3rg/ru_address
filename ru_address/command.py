@@ -15,10 +15,11 @@ from ru_address.common import Common
 @click.option('--no-data', is_flag=True, help='Skip table definition in resulting file')
 @click.option('--no-definition', is_flag=True, help='Skip table data in resulting file')
 @click.option('--encoding', type=str, default='utf8mb4', help='Default table encoding')
+@click.option('--beta', is_flag=True, help='Check unstable methods')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 @click.argument('output_path', type=click.types.Path(exists=True, file_okay=False, readable=True, writable=True))
 @click.version_option(version=__version__)
-def cli(join, source, table_list, no_data, no_definition, encoding, source_path, output_path):
+def cli(join, source, table_list, no_data, no_definition, encoding, beta, source_path, output_path):
     """ Подготавливает БД ФИАС для использования с SQL.
     XSD файлы и XML выгрузку можно получить на сайте ФНС https://fias.nalog.ru/Updates.aspx
     """
@@ -33,7 +34,7 @@ def cli(join, source, table_list, no_data, no_definition, encoding, source_path,
         mode = Output.SINGLE_FILE
 
     output = Output(output_path, mode)
-    converter = Converter(source, source_path)
+    converter = Converter(source, source_path, beta)
 
     if mode == Output.SINGLE_FILE:
         file = output.open_dump_file(join)

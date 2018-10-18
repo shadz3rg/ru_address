@@ -11,15 +11,6 @@ ru_address: Конвертация БД ФИАС в SQL дамп
 Установка
 ---------
 Требуется установленный Python 3.6
-Простой способ:
-
-::
-
-    $ pip install ru_address
-
-
-Чуть более сложный способ:
-
 ::
 
     $ git clone https://github.com/shadz3rg/ru_address.git && cd ru_address && python setup.py install

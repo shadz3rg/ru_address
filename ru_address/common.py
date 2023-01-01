@@ -5,6 +5,7 @@ import psutil
 
 
 class Common:
+    """Utils"""
     @staticmethod
     def build_ngrams(keyword, n=3, filler="__"):
         keyword_w_filler = filler + keyword + filler
@@ -17,7 +18,7 @@ class Common:
         return " ".join(trigrams)
 
     @staticmethod
-    def clear_keyword(keyword, regex=re.compile("[\s\"'.,()\-_\\\/]")):
+    def clear_keyword(keyword, regex=re.compile(r"[\s\"'.,()\-_\\\/]")):
         keyword = regex.sub("_", keyword)
         return keyword.lower()
 
@@ -29,15 +30,15 @@ class Common:
     @staticmethod
     def cli_output(message):
         now = time.strftime("%H:%M:%S")
-        print('[{}] {}'.format(now, message))
+        print(f'[{now}] {message}')
 
     @staticmethod
     def show_memory_usage():
         process = psutil.Process(os.getpid())
-        print('Memory usage: {} mb'.format(round(process.memory_info().rss / 1024 / 1024, 2)))
+        print(f'Memory usage: {round(process.memory_info().rss / 1024 / 1024, 2)} mb')
 
 
-class DataSource(object):
+class DataSource:
     def __init__(self, filename):
         self.size = os.path.getsize(filename)
         self.delivered = 0

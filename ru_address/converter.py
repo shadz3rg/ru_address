@@ -35,18 +35,17 @@ class Converter:
         self.beta = beta
 
     def get_source_filepath(self, table, extension):
-        """ Ищем файл таблицы в папке с исходниками, 
-        Названия файлов в непонятном формате, например AS_ACTSTAT_2_250_08_04_01_01.xsd
-        """
-        file = 'AS_{}_*.{}'.format(table, extension)
+        """ Ищем файл таблицы в папке с исходниками,
+        Названия файлов в непонятном формате, например AS_ACTSTAT_2_250_08_04_01_01.xsd"""
+        file = f'AS_{table}_*.{extension}'
         file_path = os.path.join(self.source_path, file)
         found_files = glob.glob(file_path)
         if len(found_files) == 1:
             return found_files[0]
         elif len(found_files) > 1:
-            raise FileNotFoundError('More than one file found: {}'.format(file_path))
+            raise FileNotFoundError(f'More than one file found: {file_path}')
         else:
-            raise FileNotFoundError('Not found source file: {}'.format(file_path))
+            raise FileNotFoundError(f'Not found source file: {file_path}')
 
     def convert_table(self, file, table, skip_definition, skip_data, batch_size):
         """ Конвертирует схему и данные таблицы, используя соответствующие XSD и XML файлы. """
@@ -82,7 +81,7 @@ class Converter:
         table_list = table_list_string.split(',')
         for table in table_list:
             if table not in Converter.TABLE_LIST:
-                raise ValueError('Unknown table "{}"'.format(table))
+                raise ValueError(f'Unknown table "{table}"')
         return table_list
 
     @staticmethod
@@ -115,9 +114,10 @@ class Converter:
 
     @staticmethod
     def get_table_separator(table):
-        return ("\n\n-- Table `{}`\n").format(table)
+        return f"\n\n-- Table `{table}`\n"
 
 class Output:
+    """Conversion result helper"""
     SINGLE_FILE = 0
     FILE_PER_TABLE = 1
 
@@ -126,7 +126,7 @@ class Output:
         self.mode = mode
 
     def get_table_filename(self, table):
-        return '{}.{}'.format(table, 'sql')
+        return f'{table}.sql'
 
     def open_dump_file(self, filename):
         filepath = os.path.join(self.output_path, filename)

@@ -17,8 +17,6 @@ setup(
        [console_scripts]
         ru_address=ru_address.command:cli
     ''',
-    classifiers=(
-        'Environment :: Console',
-    ),
-	include_package_data = True
+    classifiers=['Environment :: Console'],
+    include_package_data=True
 )

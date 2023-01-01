@@ -1,10 +1,10 @@
-import click
 import time
+import click
 
-from . import __version__
 from ru_address.converter import Converter
 from ru_address.converter import Output
 from ru_address.common import Common
+from . import __version__
 
 
 @click.command()
@@ -42,7 +42,7 @@ def cli(join, source, table_list, no_data, no_definition, encoding, beta, source
         file.write(Converter.get_dump_header(encoding))
 
         for table in process_tables:
-            Common.cli_output('Processing table `{}`'.format(table))
+            Common.cli_output(f'Processing table `{table}`')
             file.write(Converter.get_table_separator(table))
             converter.convert_table(file, table, no_definition, no_data, 500)
 
@@ -55,7 +55,7 @@ def cli(join, source, table_list, no_data, no_definition, encoding, beta, source
             file.write(Converter.get_dump_copyright())
             file.write(Converter.get_dump_header(encoding))
 
-            Common.cli_output('Processing table `{}`'.format(table))
+            Common.cli_output(f'Processing table `{table}`')
             converter.convert_table(file, table, no_definition, no_data, 500)
 
             file.write(Converter.get_dump_footer())
@@ -63,4 +63,4 @@ def cli(join, source, table_list, no_data, no_definition, encoding, beta, source
 
     Common.show_memory_usage()
     time_measure = time.time() - start_time
-    print("{} s".format(round(time_measure, 2)))
+    print(f"{round(time_measure, 2)} s")

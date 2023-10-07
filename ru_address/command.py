@@ -47,7 +47,7 @@ def schema(target, table, no_keys, encoding, source_path, output_path):
         raise UnknownPlatformError()
 
     converter = _converter()
-    output = converter.process(source_path, output_path, table, not no_keys, encoding)
+    output = converter.process(source_path, table, not no_keys)
     if os.path.isdir(output_path):
         for key, value in output.items():
             f = open(os.path.join(output_path, f'{key}.{converter.get_extension()}'), "w")

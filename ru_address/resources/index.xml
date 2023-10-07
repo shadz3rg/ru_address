@@ -34,7 +34,7 @@
         <primary-key field="ID"/>
     </table>
     <table id="CHANGE_HISTORY">
-        <primary-key field="ID"/>
+
     </table>
     <table id="HOUSE_TYPES">
         <primary-key field="ID"/>
@@ -58,7 +58,7 @@
         <primary-key field="ID"/>
     </table>
     <table id="OBJECT_LEVELS">
-        <primary-key field="ID"/>
+
     </table>
     <table id="OPERATION_TYPES">
         <primary-key field="ID"/>

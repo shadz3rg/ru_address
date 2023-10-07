@@ -30,21 +30,45 @@
                     <xsl:text>)</xsl:text>
                 </xsl:when>
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:byte'">INT(1)</xsl:when>
-                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string'"><xsl:text>VARCHAR(</xsl:text>
+                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string'">
 
                     <xsl:choose>
                         <xsl:when test="xs:simpleType/xs:restriction/xs:maxLength">
-                            <xsl:value-of select="xs:simpleType/xs:restriction/xs:maxLength/@value" />
+                            <xsl:choose>
+                                <xsl:when test="xs:simpleType/xs:restriction/xs:maxLength/@value > 255">
+                                    <xsl:text>TEXT</xsl:text>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:text>VARCHAR(</xsl:text>
+                                    <xsl:value-of select="xs:simpleType/xs:restriction/xs:maxLength/@value" />
+                                    <xsl:text>)</xsl:text>
+                                </xsl:otherwise>
+                            </xsl:choose>
                         </xsl:when>
                         <xsl:when test="xs:simpleType/xs:restriction/xs:length">
-                            <xsl:value-of select="xs:simpleType/xs:restriction/xs:length/@value" />
+                            <xsl:choose>
+                                <xsl:when test="xs:simpleType/xs:restriction/xs:length/@value > 255">
+                                    <xsl:text>TEXT</xsl:text>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:text>VARCHAR(</xsl:text>
+                                    <xsl:value-of select="xs:simpleType/xs:restriction/xs:length/@value" />
+                                    <xsl:text>)</xsl:text>
+                                </xsl:otherwise>
+                            </xsl:choose>
                         </xsl:when>
-                        <xsl:otherwise>128</xsl:otherwise>
+                        <xsl:otherwise>
+                             <xsl:text>VARCHAR(128)</xsl:text>
+                        </xsl:otherwise>
                     </xsl:choose>
 
-                    <xsl:text>)</xsl:text></xsl:when>
+                    </xsl:when>
+                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:date'">DATE</xsl:when>
                 <xsl:when test="@type='xs:date'">DATE</xsl:when>
                 <xsl:when test="@type='xs:boolean'">INT(1)</xsl:when>
+                <xsl:when test="@type='xs:integer'">INT</xsl:when>
+                <xsl:when test="@type='xs:long'">INT</xsl:when>
+                <xsl:otherwise>VARCHAR(128)</xsl:otherwise>
             </xsl:choose>
 
             <!-- Column required -->

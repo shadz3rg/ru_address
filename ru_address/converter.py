@@ -78,7 +78,7 @@ class Converter:
         return table_list
 
     @staticmethod
-    def get_dump_copyright():
+    def compose_copyright():
         """ Сообщение в заголовок сгенерированного файла """
         header = ("-- --------------------------------------------------------\n"
                   "-- ver. {}\n"
@@ -89,7 +89,7 @@ class Converter:
         return header.format(__version__, str(now))
 
     @staticmethod
-    def get_dump_header(encoding):
+    def compose_dump_header(encoding):
         """ Подготовка к импорту """
         header = ("/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n"
                   "/*!40101 SET NAMES {} */;\n"
@@ -98,7 +98,7 @@ class Converter:
         return header.format(encoding)
 
     @staticmethod
-    def get_dump_footer():
+    def compose_dump_footer():
         """ Завершение импорта """
         footer = ("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;\n"
                   "/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;\n"
@@ -109,6 +109,7 @@ class Converter:
     def get_table_separator(table):
         return f"\n\n-- Table `{table}`\n"
 
+
 class Output:
     """Conversion result helper"""
     SINGLE_FILE = 0
@@ -118,9 +119,12 @@ class Output:
         self.output_path = output_path
         self.mode = mode
 
-    def get_table_filename(self, table):
-        return f'{table}.sql'
-
-    def open_dump_file(self, filename):
-        filepath = os.path.join(self.output_path, filename)
+    def open_dump_file(self, table_name, sub_dir=None):
+        filename = f'{table_name}.sql'
+        if sub_dir:
+            if not os.path.exists(os.path.join(self.output_path, sub_dir)):
+                os.mkdir(os.path.join(self.output_path, sub_dir))
+            filepath = os.path.join(self.output_path, sub_dir, filename)
+        else:
+            filepath = os.path.join(self.output_path, filename)
         return open(filepath, 'w', encoding='utf-8')

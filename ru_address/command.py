@@ -1,6 +1,6 @@
 import time
-import click
 import os.path
+import click
 from ru_address.converter import Converter
 from ru_address.converter import Output
 from ru_address.common import Common
@@ -8,6 +8,7 @@ from ru_address import __version__
 from ru_address.core import Core
 from ru_address.errors import UnknownPlatformError
 from ru_address.schema import ConverterRegistry as SchemaConverterRegistry
+from ru_address.dump import ConverterRegistry as DumpConverterRegistry, regions_from_directory
 
 
 # TODO: Add summary for each command
@@ -62,58 +63,54 @@ def schema(target, table, no_keys, encoding, source_path, output_path):
 
 
 @click.command()
-@click.option('--target',  type=click.Choice([Converter.SOURCE_XML, Converter.SOURCE_DBF]),
-              default=Converter.SOURCE_XML, help='Target DB platform')
-@click.option('--region', type=str, multiple=True, help='Limit region directory to process')
-@click.option('--join', type=click.Choice([Converter.SOURCE_XML, Converter.SOURCE_DBF]),
-              default=Converter.SOURCE_XML, help='Join dump into single file with given filename')
-@click.option('--source', type=click.Choice([Converter.SOURCE_XML, Converter.SOURCE_DBF]),
-              default=Converter.SOURCE_XML, help='Data source file format')
-@click.option('--table-list', type=str, help='Comma-separated string for limiting table list to process')
+@click.option('--target',  type=click.Choice(DumpConverterRegistry.get_available_platforms()),
+              default='sql', help='Target dump format')
+@click.option('--region', type=str, multiple=True, default=[], help='Limit region list to process')
+@click.option('--table', type=str, multiple=True, default=Core.get_known_tables(), help='Limit table list to process')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
-# TODO: Same by default
-@click.argument('schema_source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 # TODO: Check is file for join SINGLE_FILE
 @click.argument('output_path', type=click.types.Path(exists=True, file_okay=True, readable=True, writable=True))
-def dump(join, source, table_list, no_data, no_definition, encoding, beta, source_path, output_path):
+# TODO: Same by default
+@click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), default=None)
+def dump(target, region, table, source_path, output_path, schema_path):
     """
     Convert tables content into target platform dump file.
     """
-    process_tables = Converter.TABLE_LIST
-    if table_list is not None:
-        process_tables = Converter.prepare_table_input(table_list)
+    output = Output(output_path, Output.FILE_PER_TABLE)
 
-    mode = Output.FILE_PER_TABLE
-    if join is not None:
-        mode = Output.SINGLE_FILE
+    registry = DumpConverterRegistry()
+    _converter = registry.get_converter(target)
+    if _converter is None:
+        raise UnknownPlatformError()
 
-    output = Output(output_path, mode)
-    converter = Converter(source, source_path, beta)
+    converter = _converter(source_path, schema_path)
 
-    if mode == Output.SINGLE_FILE:
-        file = output.open_dump_file(join)
-        file.write(Converter.get_dump_copyright())
-        file.write(Converter.get_dump_header(encoding))
-
-        for table in process_tables:
-            Common.cli_output(f'Processing table `{table}`')
-            file.write(Converter.get_table_separator(table))
-            converter.convert_table(file, table, no_definition, no_data, 500)
-
-        file.write(Converter.get_dump_footer())
-        file.close()
-
-    elif mode == Output.FILE_PER_TABLE:
-        for table in process_tables:
-            file = output.open_dump_file(output.get_table_filename(table))
-            file.write(Converter.get_dump_copyright())
-            file.write(Converter.get_dump_header(encoding))
-
-            Common.cli_output(f'Processing table `{table}`')
-            converter.convert_table(file, table, no_definition, no_data, 500)
-
-            file.write(Converter.get_dump_footer())
+    for table_name in Core.COMMON_TABLE_LIST:
+        if table_name in table:
+            Common.cli_output(f'Processing common table `{table_name}`')
+            file = output.open_dump_file(table_name)
+            file.write(Converter.compose_copyright())
+            file.write(Converter.compose_dump_header(''))
+            # TODO Batch size via ENV param
+            converter.convert_table(file, table_name, 500)
+            file.write(Converter.compose_dump_footer())
             file.close()
+
+    if len(region) == 0:
+        region = regions_from_directory(source_path)
+
+    for _region in region:
+        Common.cli_output(f'Processing region directory `{_region}`')
+        for table_name in Core.REGION_TABLE_LIST:
+            if table_name in table:
+                Common.cli_output(f'Processing table `{table_name}`')
+                file = output.open_dump_file(table_name, _region)
+                file.write(Converter.compose_copyright())
+                file.write(Converter.compose_dump_header(''))
+                # TODO Batch size via ENV param
+                converter.convert_table(file, table_name, 500, _region)
+                file.write(Converter.compose_dump_footer())
+                file.close()
 
 
 cli.add_command(schema)

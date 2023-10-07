@@ -1,12 +1,9 @@
 import math
-import os.path
 import xml.sax
 import lxml.etree as et
 from ru_address.common import Common
 from ru_address.common import DataSource
-from ru_address import package_directory
 from ru_address.errors import DefinitionError
-from ru_address.index import Index
 
 
 class Data:
@@ -33,7 +30,7 @@ class Data:
         current_row = 0
         context = et.iterparse(self.data_source, events=('end',), tag=definition.get_entity_tag())
 
-        for event, elem in context:
+        for _, elem in context:
             content = []
 
             value_query_parts = []
@@ -43,7 +40,8 @@ class Data:
                 value = "NULL"
                 if elem.get(field) is not None:
                     value = elem.get(field).replace('\\', '\\\\"').replace('"', '\\"')
-                    value = '"%s"' % value
+                    value = f'"{value}"'
+                # TODO Transform bool values
                 value_query_parts.append(value)
 
             value_query = ', '.join(value_query_parts)
@@ -199,3 +197,6 @@ class Definition:
 
     def get_table_fields(self):
         return self.table_fields
+
+    def get_entity_tag(self):
+        return self.entity_tag

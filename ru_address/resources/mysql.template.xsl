@@ -9,7 +9,7 @@
     <xsl:template match="/">
         <xsl:text>DROP TABLE IF EXISTS `</xsl:text><xsl:value-of select="$table_name"/><xsl:text>`;&#xa;</xsl:text>
         <xsl:text>CREATE TABLE `</xsl:text><xsl:value-of select="$table_name"/><xsl:text>` (&#xa;</xsl:text>
-        <xsl:for-each select="/xs:schema/xs:element[1]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/xs:complexType[1]/xs:attribute" >
+        <xsl:for-each select=".//xs:complexType[1]/xs:attribute" >
             <!-- Column -->
             <xsl:text>  `</xsl:text><xsl:value-of select="normalize-space(@name)"/><xsl:text>` </xsl:text>
 

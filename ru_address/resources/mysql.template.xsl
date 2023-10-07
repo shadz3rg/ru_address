@@ -15,7 +15,7 @@
 
             <!-- Column Type -->
             <xsl:choose>
-                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:integer' or xs:simpleType/xs:restriction/@base='xs:int'">
+                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:integer' or xs:simpleType/xs:restriction/@base='xs:int' or xs:simpleType/xs:restriction/@base='xs:long'">
                     <xsl:text>INT(</xsl:text>
 
                     <xsl:choose>
@@ -44,6 +44,7 @@
 
                     <xsl:text>)</xsl:text></xsl:when>
                 <xsl:when test="@type='xs:date'">DATE</xsl:when>
+                <xsl:when test="@type='xs:boolean'">INT(1)</xsl:when>
             </xsl:choose>
 
             <!-- Column required -->

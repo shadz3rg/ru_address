@@ -5,6 +5,7 @@ import lxml.etree as et
 from ru_address.common import Common
 from ru_address.common import DataSource
 from ru_address import package_directory
+from ru_address.errors import DefinitionError
 from ru_address.index import Index
 
 
@@ -162,12 +163,12 @@ class DataHandler(xml.sax.handler.ContentHandler):
 
 class Definition:
     """XML table schema handler"""
-    def __init__(self, table_name, source_file):
-        self.table_name = table_name
+    def __init__(self, title_name, source_file):
+        self.title_name = title_name
         self.tree = et.parse(source_file)
-        self.stylesheet_file = os.path.join(package_directory, 'resources', 'definition.xsl')
-        self.table_fields = self._fetch_table_fields()
+        self.collection_tag = self._fetch_collection_tag()
         self.entity_tag = self._fetch_entity_tag()
+        self.table_fields = self._fetch_table_fields()
 
     def _fetch_table_fields(self):
         table_fields = []
@@ -179,23 +180,22 @@ class Definition:
 
         return table_fields
 
+    def _fetch_collection_tag(self):
+        namespace = {'xs': 'http://www.w3.org/2001/XMLSchema'}
+        element = self.tree.find("/xs:element[@name]", namespace)
+        return element.attrib['name']
+
     def _fetch_entity_tag(self):
         namespace = {'xs': 'http://www.w3.org/2001/XMLSchema'}
-        element = self.tree.find(".//xs:sequence/xs:element", namespace)
-        return element.attrib['name']
+        element = self.tree.find(".//xs:sequence/xs:element[@name]", namespace)
+        if element is not None:
+            return element.attrib['name']
+
+        element = self.tree.find(".//xs:sequence/xs:element[@ref]", namespace)
+        if element is not None:
+            return element.attrib['ref']
+
+        raise DefinitionError
 
     def get_table_fields(self):
         return self.table_fields
-
-    def get_entity_tag(self):
-        return self.entity_tag
-
-    def convert_and_dump(self, dump_file):
-        stylesheet = et.parse(self.stylesheet_file)
-        transform = et.XSLT(stylesheet)
-
-        plain_table_name = transform.strparam(self.table_name)
-        index = transform.strparam(Index().build(self.table_name))
-        result = transform(self.tree, table_name=plain_table_name, index=index)
-
-        dump_file.write(str(result))

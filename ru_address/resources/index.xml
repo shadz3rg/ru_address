@@ -1,62 +1,87 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <database>
-    <table id="ACTSTAT">
-        <primary-key field="ACTSTATID"/>
+    <table id="ADDHOUSE_TYPES">
+        <primary-key field="ID"/>
     </table>
-    <table id="ADDROBJ">
-        <primary-key field="AOID"/>
-        <key field="ACTSTATUS"/>
-        <key field="CENTSTATUS"/>
-        <key field="OPERSTATUS"/>
-        <key field="CURRSTATUS"/>
-        <key field="NORMDOC"/>
-        <key field="AOLEVEL"/>
+    <table id="ADDR_OBJ">
+        <primary-key field="ID"/>
     </table>
-    <table id="CENTERST">
-        <primary-key field="CENTERSTID"/>
+    <table id="ADDR_OBJ_DIVISION">
+        <primary-key field="ID"/>
     </table>
-    <table id="CURENTST">
-        <primary-key field="CURENTSTID"/>
+    <table id="ADDR_OBJ_PARAMS">
+        <primary-key field="ID"/>
     </table>
-    <table id="ESTSTAT">
-        <primary-key field="ESTSTATID"/>
+    <table id="ADDR_OBJ_TYPES">
+        <primary-key field="ID"/>
     </table>
-	<table id="HOUSE">
-        <primary-key field="HOUSEID"/>
-		<key field="ESTSTATUS" />
-		<key field="NORMDOC" />
-		<key field="STATSTATUS" />
-		<key field="STRSTATUS" />
+    <table id="ADM_HIERARCHY">
+        <primary-key field="ID"/>
     </table>
-    <table id="HOUSEINT">
-        <primary-key field="HOUSEINTID"/>
-        <key field="INTSTATUS"/>
-		<key field="NORMDOC"/>
+    <table id="APARTMENT_TYPES">
+        <primary-key field="ID"/>
     </table>
-    <table id="HSTSTAT">
-        <primary-key field="HOUSESTID"/>
+    <table id="APARTMENTS">
+        <primary-key field="ID"/>
     </table>
-    <table id="INTVSTAT">
-        <primary-key field="INTVSTATID"/>
+    <table id="APARTMENTS_PARAMS">
+        <primary-key field="ID"/>
     </table>
-    <table id="LANDMARK">
-        <primary-key field="LANDID"/>
-		<key field="NORMDOC"/>
+    <table id="CARPLACES">
+        <primary-key field="ID"/>
     </table>
-    <table id="NDOCTYPE">
-        <primary-key field="NDTYPEID"/>
+    <table id="CARPLACES_PARAMS">
+        <primary-key field="ID"/>
     </table>
-    <table id="NORMDOC">
-        <primary-key field="NORMDOCID"/>
-        <key field="DOCTYPE"/>
+    <table id="CHANGE_HISTORY">
+        <primary-key field="ID"/>
     </table>
-    <table id="OPERSTAT">
-        <primary-key field="OPERSTATID"/>
+    <table id="HOUSE_TYPES">
+        <primary-key field="ID"/>
     </table>
-    <table id="SOCRBASE">
-        <key field="SCNAME"/>
+    <table id="HOUSES">
+        <primary-key field="ID"/>
     </table>
-	<table id="STRSTAT">
-        <primary-key field="STRSTATID"/>
+    <table id="HOUSES_PARAMS">
+        <primary-key field="ID"/>
+    </table>
+    <table id="MUN_HIERARCHY">
+        <primary-key field="ID"/>
+    </table>
+    <table id="NORMATIVE_DOCS">
+        <primary-key field="ID"/>
+    </table>
+    <table id="NORMATIVE_DOCS_KINDS">
+        <primary-key field="ID"/>
+    </table>
+    <table id="NORMATIVE_DOCS_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="OBJECT_LEVELS">
+        <primary-key field="ID"/>
+    </table>
+    <table id="OPERATION_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="PARAM_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="REESTR_OBJECTS">
+
+    </table>
+    <table id="ROOM_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="ROOMS">
+        <primary-key field="ID"/>
+    </table>
+    <table id="ROOMS_PARAMS">
+        <primary-key field="ID"/>
+    </table>
+    <table id="STEADS">
+        <primary-key field="ID"/>
+    </table>
+    <table id="STEADS_PARAMS">
+        <primary-key field="ID"/>
     </table>
 </database>

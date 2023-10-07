@@ -9,7 +9,6 @@ from ru_address._version import __version__
 
 class Converter:
     SOURCE_XML = 'xml'
-    SOURCE_DBF = 'dbf'
 
     TABLE_LIST = [
         'ACTSTAT',
@@ -51,8 +50,6 @@ class Converter:
         """ Конвертирует схему и данные таблицы, используя соответствующие XSD и XML файлы. """
         if self.source == self.SOURCE_XML:
             self._convert_table_xml(file, table, skip_definition, skip_data, batch_size)
-        elif self.source == self.SOURCE_DBF:
-            self._convert_table_dbf(file, table, skip_definition, skip_data, batch_size)
 
     def _convert_table_xml(self, file, table, skip_definition, skip_data, batch_size):
         """ Конвертирует схему и данные таблицы, используя соответствующие XSD и XML файлы. """
@@ -70,10 +67,6 @@ class Converter:
                 data.convert_and_dump_v2(dump_file, definition, batch_size)
             else:
                 data.convert_and_dump(dump_file, definition, batch_size)
-
-    def _convert_table_dbf(self, table, skip_definition, skip_data, batch_size):
-        """ Конвертирует схему и данные таблицы, используя соответствующие XSD и DBF файлы. """
-        print('TODO!')
 
     @staticmethod
     def prepare_table_input(table_list_string):

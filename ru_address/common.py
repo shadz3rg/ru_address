@@ -35,7 +35,12 @@ class Common:
     @staticmethod
     def show_memory_usage():
         process = psutil.Process(os.getpid())
-        print(f'Memory usage: {round(process.memory_info().rss / 1024 / 1024, 2)} mb')
+        print(f'> Memory usage: {round(process.memory_info().rss / 1024 / 1024, 2)}M')
+
+    @staticmethod
+    def show_execution_time(start_time):
+        time_measure = time.time() - start_time
+        print(f"> Execution time: {round(time_measure, 2)}s")
 
 
 class DataSource:

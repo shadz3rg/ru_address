@@ -4,7 +4,7 @@ import datetime
 
 from ru_address.source.xml import Definition
 from ru_address.source.xml import Data
-from ru_address._version import __version__
+from ru_address import __version__
 
 
 class Converter:
@@ -80,13 +80,25 @@ class Converter:
     @staticmethod
     def compose_copyright():
         """ Сообщение в заголовок сгенерированного файла """
-        header = ("-- --------------------------------------------------------\n"
-                  "-- ver. {}\n"
-                  "-- get latest version @ https://github.com/shadz3rg/ru_address\n"
-                  "-- file generated {}\n"
-                  "-- --------------------------------------------------------\n\n")
+
         now = datetime.datetime.now()
-        return header.format(__version__, str(now))
+        version_string = f'v{__version__} -- get latest version @ https://github.com/shadz3rg/ru_address'
+        generation_ts = f'generation timestamp: {str(now)}'
+
+        header = (
+            "-- {} --\n"
+            "-- {} --\n"
+            "-- {}{} --\n"
+            "-- {} --\n\n"
+        )
+
+        return header.format(
+            '-' * len(version_string),
+            version_string,
+            generation_ts,
+            ' ' * (len(version_string) - len(generation_ts)),
+            '-' * len(version_string)
+        )
 
     @staticmethod
     def compose_dump_header(encoding):

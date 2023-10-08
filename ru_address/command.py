@@ -21,8 +21,10 @@ def command_summary(f):
     return update_wrapper(wrapper, f)
 
 
-@click.group()
-def cli():
+@click.group(invoke_without_command=True, no_args_is_help=True)
+@click.version_option(__version__)
+@click.pass_context
+def cli(_):
     pass
 
 

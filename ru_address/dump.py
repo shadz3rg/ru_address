@@ -40,9 +40,10 @@ class BaseDumpConverter(ABC):
     def __init__(self, source_path, schema_path):
         self.source_path = source_path
         self.schema_path = schema_path
+        self.batch_size = int(os.environ.get("RA_BATCH_SIZE", "500"))
 
     @abstractmethod
-    def convert_table(self, file, table_name, batch_size, sub=None):
+    def convert_table(self, file, table_name, sub=None):
         pass
 
     @staticmethod
@@ -80,7 +81,7 @@ class SqlConverter(BaseDumpConverter):
         BaseDumpConverter.__init__(self, source_path, schema_path)
         self.encoding = os.environ.get("RA_SQL_ENCODING", "utf8mb4")
 
-    def convert_table(self, file, table_name, batch_size, sub=None):
+    def convert_table(self, file, table_name, sub=None):
         dump_file = file
 
         tables = Core.get_known_tables()
@@ -93,7 +94,7 @@ class SqlConverter(BaseDumpConverter):
 
         source_filepath = self.get_source_filepath(path, table_name, 'xml')
         data = Data(table_name, source_filepath)
-        data.convert_and_dump_v2(dump_file, definition, batch_size)
+        data.convert_and_dump_v2(dump_file, definition, self.batch_size)
 
     @staticmethod
     def get_extension() -> str:
@@ -119,7 +120,7 @@ class PlainCommaConverter(BaseDumpConverter):
     """
     PostgreSQL compatible converter
     """
-    def convert_table(self, definition: Definition, table_name: str, include_keys: bool, sub=None):
+    def convert_table(self, file, table_name, sub=None):
         raise NotImplementedError
 
     @staticmethod
@@ -137,7 +138,7 @@ class PlainTabConverter(BaseDumpConverter):
     """
     Clickhouse compatible converter
     """
-    def convert_table(self, definition: Definition, table_name: str, include_keys: bool, sub=None):
+    def convert_table(self, file, table_name, sub=None):
         raise NotImplementedError
 
     @staticmethod

@@ -93,8 +93,7 @@ def dump(target, region, table, source_path, output_path, schema_path):
             file = output.open_dump_file(table_name)
             file.write(Core.compose_copyright())
             file.write(converter.compose_dump_header())
-            # TODO Batch size via ENV param
-            converter.convert_table(file, table_name, 500)
+            converter.convert_table(file, table_name)
             file.write(converter.compose_dump_footer())
             file.close()
 
@@ -109,8 +108,7 @@ def dump(target, region, table, source_path, output_path, schema_path):
                 file = output.open_dump_file(table_name, _region)
                 file.write(Core.compose_copyright())
                 file.write(converter.compose_dump_header())
-                # TODO Batch size via ENV param
-                converter.convert_table(file, table_name, 500, _region)
+                converter.convert_table(file, table_name, _region)
                 file.write(converter.compose_dump_footer())
                 file.close()
 

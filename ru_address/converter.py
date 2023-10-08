@@ -9,7 +9,6 @@ from ru_address._version import __version__
 
 class Converter:
     SOURCE_XML = 'xml'
-    SOURCE_DBF = 'dbf'
 
     TABLE_LIST = [
         'ACTSTAT',
@@ -51,8 +50,6 @@ class Converter:
         """ Конвертирует схему и данные таблицы, используя соответствующие XSD и XML файлы. """
         if self.source == self.SOURCE_XML:
             self._convert_table_xml(file, table, skip_definition, skip_data, batch_size)
-        elif self.source == self.SOURCE_DBF:
-            self._convert_table_dbf(file, table, skip_definition, skip_data, batch_size)
 
     def _convert_table_xml(self, file, table, skip_definition, skip_data, batch_size):
         """ Конвертирует схему и данные таблицы, используя соответствующие XSD и XML файлы. """
@@ -71,10 +68,6 @@ class Converter:
             else:
                 data.convert_and_dump(dump_file, definition, batch_size)
 
-    def _convert_table_dbf(self, table, skip_definition, skip_data, batch_size):
-        """ Конвертирует схему и данные таблицы, используя соответствующие XSD и DBF файлы. """
-        print('TODO!')
-
     @staticmethod
     def prepare_table_input(table_list_string):
         """ Подготавливает переданный через аргумент список таблиц """
@@ -85,7 +78,7 @@ class Converter:
         return table_list
 
     @staticmethod
-    def get_dump_copyright():
+    def compose_copyright():
         """ Сообщение в заголовок сгенерированного файла """
         header = ("-- --------------------------------------------------------\n"
                   "-- ver. {}\n"
@@ -96,7 +89,7 @@ class Converter:
         return header.format(__version__, str(now))
 
     @staticmethod
-    def get_dump_header(encoding):
+    def compose_dump_header(encoding):
         """ Подготовка к импорту """
         header = ("/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n"
                   "/*!40101 SET NAMES {} */;\n"
@@ -105,7 +98,7 @@ class Converter:
         return header.format(encoding)
 
     @staticmethod
-    def get_dump_footer():
+    def compose_dump_footer():
         """ Завершение импорта """
         footer = ("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;\n"
                   "/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;\n"
@@ -116,6 +109,7 @@ class Converter:
     def get_table_separator(table):
         return f"\n\n-- Table `{table}`\n"
 
+
 class Output:
     """Conversion result helper"""
     SINGLE_FILE = 0
@@ -125,9 +119,12 @@ class Output:
         self.output_path = output_path
         self.mode = mode
 
-    def get_table_filename(self, table):
-        return f'{table}.sql'
-
-    def open_dump_file(self, filename):
-        filepath = os.path.join(self.output_path, filename)
+    def open_dump_file(self, table_name, sub_dir=None):
+        filename = f'{table_name}.sql'
+        if sub_dir:
+            if not os.path.exists(os.path.join(self.output_path, sub_dir)):
+                os.mkdir(os.path.join(self.output_path, sub_dir))
+            filepath = os.path.join(self.output_path, sub_dir, filename)
+        else:
+            filepath = os.path.join(self.output_path, filename)
         return open(filepath, 'w', encoding='utf-8')

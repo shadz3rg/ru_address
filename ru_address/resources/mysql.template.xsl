@@ -9,13 +9,13 @@
     <xsl:template match="/">
         <xsl:text>DROP TABLE IF EXISTS `</xsl:text><xsl:value-of select="$table_name"/><xsl:text>`;&#xa;</xsl:text>
         <xsl:text>CREATE TABLE `</xsl:text><xsl:value-of select="$table_name"/><xsl:text>` (&#xa;</xsl:text>
-        <xsl:for-each select="/xs:schema/xs:element[1]/xs:complexType[1]/xs:sequence[1]/xs:element[1]/xs:complexType[1]/xs:attribute" >
+        <xsl:for-each select=".//xs:complexType[1]/xs:attribute" >
             <!-- Column -->
             <xsl:text>  `</xsl:text><xsl:value-of select="normalize-space(@name)"/><xsl:text>` </xsl:text>
 
             <!-- Column Type -->
             <xsl:choose>
-                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:integer' or xs:simpleType/xs:restriction/@base='xs:int'">
+                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:integer' or xs:simpleType/xs:restriction/@base='xs:int' or xs:simpleType/xs:restriction/@base='xs:long'">
                     <xsl:text>INT(</xsl:text>
 
                     <xsl:choose>
@@ -30,20 +30,46 @@
                     <xsl:text>)</xsl:text>
                 </xsl:when>
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:byte'">INT(1)</xsl:when>
-                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string'"><xsl:text>VARCHAR(</xsl:text>
+                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string'">
 
+                    <!-- TODO: Length variable -->
                     <xsl:choose>
                         <xsl:when test="xs:simpleType/xs:restriction/xs:maxLength">
-                            <xsl:value-of select="xs:simpleType/xs:restriction/xs:maxLength/@value" />
+                            <xsl:choose>
+                                <xsl:when test="xs:simpleType/xs:restriction/xs:maxLength/@value > 255">
+                                    <xsl:text>TEXT</xsl:text>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:text>VARCHAR(</xsl:text>
+                                    <xsl:value-of select="xs:simpleType/xs:restriction/xs:maxLength/@value" />
+                                    <xsl:text>)</xsl:text>
+                                </xsl:otherwise>
+                            </xsl:choose>
                         </xsl:when>
                         <xsl:when test="xs:simpleType/xs:restriction/xs:length">
-                            <xsl:value-of select="xs:simpleType/xs:restriction/xs:length/@value" />
+                            <xsl:choose>
+                                <xsl:when test="xs:simpleType/xs:restriction/xs:length/@value > 255">
+                                    <xsl:text>TEXT</xsl:text>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:text>VARCHAR(</xsl:text>
+                                    <xsl:value-of select="xs:simpleType/xs:restriction/xs:length/@value" />
+                                    <xsl:text>)</xsl:text>
+                                </xsl:otherwise>
+                            </xsl:choose>
                         </xsl:when>
-                        <xsl:otherwise>128</xsl:otherwise>
+                        <xsl:otherwise>
+                             <xsl:text>VARCHAR(128)</xsl:text>
+                        </xsl:otherwise>
                     </xsl:choose>
 
-                    <xsl:text>)</xsl:text></xsl:when>
+                    </xsl:when>
+                <xsl:when test="xs:simpleType/xs:restriction/@base='xs:date'">DATE</xsl:when>
                 <xsl:when test="@type='xs:date'">DATE</xsl:when>
+                <xsl:when test="@type='xs:boolean'">INT(1)</xsl:when>
+                <xsl:when test="@type='xs:integer'">INT</xsl:when>
+                <xsl:when test="@type='xs:long'">INT</xsl:when>
+                <xsl:otherwise>VARCHAR(128)</xsl:otherwise>
             </xsl:choose>
 
             <!-- Column required -->

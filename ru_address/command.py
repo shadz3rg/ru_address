@@ -77,6 +77,7 @@ def dump(target, region, table, source_path, output_path, schema_path):
     Convert tables content into target platform dump file.
     """
     output = Output(output_path, Output.FILE_PER_TABLE)
+    encoding = 'utf8mb4'
 
     registry = DumpConverterRegistry()
     _converter = registry.get_converter(target)
@@ -90,7 +91,7 @@ def dump(target, region, table, source_path, output_path, schema_path):
             Common.cli_output(f'Processing common table `{table_name}`')
             file = output.open_dump_file(table_name)
             file.write(Converter.compose_copyright())
-            file.write(Converter.compose_dump_header(''))
+            file.write(Converter.compose_dump_header(encoding))
             # TODO Batch size via ENV param
             converter.convert_table(file, table_name, 500)
             file.write(Converter.compose_dump_footer())
@@ -106,7 +107,7 @@ def dump(target, region, table, source_path, output_path, schema_path):
                 Common.cli_output(f'Processing table `{table_name}`')
                 file = output.open_dump_file(table_name, _region)
                 file.write(Converter.compose_copyright())
-                file.write(Converter.compose_dump_header(''))
+                file.write(Converter.compose_dump_header(encoding))
                 # TODO Batch size via ENV param
                 converter.convert_table(file, table_name, 500, _region)
                 file.write(Converter.compose_dump_footer())

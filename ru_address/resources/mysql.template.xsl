@@ -32,6 +32,7 @@
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:byte'">INT(1)</xsl:when>
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string'">
 
+                    <!-- TODO: Length variable -->
                     <xsl:choose>
                         <xsl:when test="xs:simpleType/xs:restriction/xs:maxLength">
                             <xsl:choose>

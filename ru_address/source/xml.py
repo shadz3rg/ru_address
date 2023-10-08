@@ -39,9 +39,14 @@ class Data:
                 # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
                 value = "NULL"
                 if elem.get(field) is not None:
-                    value = elem.get(field).replace('\\', '\\\\"').replace('"', '\\"')
-                    value = f'"{value}"'
-                # TODO Transform bool values
+                    value = elem.get(field)
+                    if value == "true":
+                        value = "1"
+                    elif value == "false":
+                        value = "0"
+                    else:
+                        value = value.replace('\\', '\\\\"').replace('"', '\\"')
+                        value = f'"{value}"'
                 value_query_parts.append(value)
 
             value_query = ', '.join(value_query_parts)

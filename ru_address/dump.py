@@ -63,14 +63,12 @@ class BaseDumpConverter(ABC):
     def get_extension() -> str:
         pass
 
-    @staticmethod
     @abstractmethod
-    def compose_dump_header() -> str:
+    def compose_dump_header(self) -> str:
         pass
 
-    @staticmethod
     @abstractmethod
-    def compose_dump_footer() -> str:
+    def compose_dump_footer(self) -> str:
         pass
 
 
@@ -78,6 +76,10 @@ class SqlConverter(BaseDumpConverter):
     """
     MySQL (and MySQL forks) compatible converter
     """
+    def __init__(self, source_path, schema_path):
+        BaseDumpConverter.__init__(self, source_path, schema_path)
+        self.encoding = os.environ.get("RA_SQL_ENCODING", "utf8mb4")
+
     def convert_table(self, file, table_name, batch_size, sub=None):
         dump_file = file
 
@@ -97,18 +99,15 @@ class SqlConverter(BaseDumpConverter):
     def get_extension() -> str:
         return 'sql'
 
-    @staticmethod
-    def compose_dump_header() -> str:
+    def compose_dump_header(self) -> str:
         """ Подготовка к импорту """
-        encoding = "utf8mb4"
         header = ("/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n"
                   "/*!40101 SET NAMES {} */;\n"
                   "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n"
                   "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n")
-        return header.format(encoding)
+        return header.format(self.encoding)
 
-    @staticmethod
-    def compose_dump_footer() -> str:
+    def compose_dump_footer(self) -> str:
         """ Завершение импорта """
         footer = ("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;\n"
                   "/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;\n"
@@ -127,12 +126,10 @@ class PlainCommaConverter(BaseDumpConverter):
     def get_extension() -> str:
         raise NotImplementedError
 
-    @staticmethod
-    def compose_dump_header() -> str:
+    def compose_dump_header(self) -> str:
         raise NotImplementedError
 
-    @staticmethod
-    def compose_dump_footer() -> str:
+    def compose_dump_footer(self) -> str:
         raise NotImplementedError
 
 
@@ -147,10 +144,8 @@ class PlainTabConverter(BaseDumpConverter):
     def get_extension() -> str:
         raise NotImplementedError
 
-    @staticmethod
-    def compose_dump_header() -> str:
+    def compose_dump_header(self) -> str:
         raise NotImplementedError
 
-    @staticmethod
-    def compose_dump_footer() -> str:
+    def compose_dump_footer(self) -> str:
         raise NotImplementedError

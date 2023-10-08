@@ -79,7 +79,6 @@ def dump(target, region, table, source_path, output_path, schema_path):
     Convert tables content into target platform dump file.
     """
     output = Output(output_path, Output.FILE_PER_TABLE)
-    encoding = 'utf8mb4'
 
     registry = DumpConverterRegistry()
     _converter = registry.get_converter(target)

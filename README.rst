@@ -1,16 +1,16 @@
-ru_address: Конвертация БД ФИАС в SQL дамп
+Конвертация БД ГАР (ex. ФИАС/КЛАДР) в SQL/CSV/TSV дамп
 ==========================================
 
-Утилита для командной строки, позволяющая сконвертировать схему, данные и ключи БД ФИАС для импорта в MySQL базу.
-Благодаря SAX парсеру потребляет небольшое количество ресурсов (не более 50 мб памяти).    
+| Утилита для командной строки, позволяющая сконвертировать схему, данные и ключи ГАР для импорта в БД MySQL/PostgreSQL/ClickHouse.
+Благодаря SAX парсеру потребляет небольшое количество ресурсов (не более 50 мб памяти).
 
-Для начала необходимо скачать актуальную XSD схему и последнюю XML выгрузку с данными ФИАС, распаковать их в одну папку и запустить команду.
+Для начала необходимо скачать актуальную XSD схему и последнюю XML выгрузку с данными ГАР, распаковать их в одну из директорий и запустить команду.
 
-Все нужные файлы можно скачать с сайта-источника ФНС России https://fias.nalog.ru/Updates.aspx
+Все нужные файлы можно скачать с сайта-источника ФНС России https://fias.nalog.ru/Frontend
 
 Установка
 ---------
-Требуется установленный Python 3.6
+Требуется Python 3.6+
 ::
 
     $ git clone https://github.com/shadz3rg/ru_address.git && cd ru_address && python setup.py install
@@ -20,32 +20,50 @@ ru_address: Конвертация БД ФИАС в SQL дамп
 
 Установка пакета дает доступ к исполняемому файлу ``ru_address``.
 
+Конвертация схемы:
+^^^^^^^^^^^^^^^^^^
 ::
 
-    $ ru_address --help
-    Usage: ru_address [OPTIONS] SOURCE_PATH OUTPUT_PATH
+    $ ru_address schema --help
+    Usage: ru_address schema [OPTIONS] SOURCE_PATH OUTPUT_PATH
 
-      Подготавливает БД ФИАС для использования с SQL. XSD файлы и XML выгрузку
-      можно получить на сайте ФНС https://fias.nalog.ru/Updates.aspx
+      Convert XSD schema into target platform definitions. 
+      Get latest schema @ https://fias.nalog.ru/docs/gar_schemas.zip
+    
+    Options:
+      --target [mysql|psql|ch]  Target DB
+      --table TEXT              Limit table list to process
+      --no-keys                 Exclude keys && column index
+      --encoding TEXT           Default table encoding
+      --help                    Show this message and exit.
+::
+
+  # Простейший вариант
+  $ ru_address /путь/к/файлам /путь/для/экспорта
+  # С ограниченным списком таблиц
+  $ ru_address /путь/к/файлам /путь/для/экспорта --table=ADDHOUSE_TYPES --table=HOUSE_TYPES
+  # Экспорт всех таблиц в один файл
+  $ ru_address /путь/к/файлам /путь/для/экспорта/schema.sql 
+
+Конвертация данных:
+^^^^^^^^^^^^^^^^^^^
+::
+
+    $ ru_address dump --help
+    Usage: ru_address dump [OPTIONS] SOURCE_PATH OUTPUT_PATH SCHEMA_PATH
+
+      Convert tables content into target platform dump file.
 
     Options:
-      --join TEXT         Опция позволяет объединить весь дамп в один файл (по умолчанию отдельный файл для каждой таблицы)
-      --source [xml|dbf]  Формат источника данных, dbf пока не реализован
-      --table-list TEXT   Список таблиц для обработки, указывается строкой с разделением запятой
-      --no-data           Пропустить вставку данных
-      --no-definition     Пропустить создание схемы
-      --encoding TEXT     Кодировка для таблицы, по умолчанию utf8mb4
-      --version           Show the version and exit.
-      --help              Show this message and exit.
-
-Простейший вариант полная конвертация:
-
+      --target [sql|csv|tsv]  Target dump format
+      --region TEXT           Limit region list to process
+      --table TEXT            Limit table list to process
+      --help                  Show this message and exit.
 ::
 
-  $ ru_address /путь/к/файлам /путь/для/сохранения --join=dump.sql
-
-С ограниченным списком таблиц:
-
-::
-
-  $ ru_address /путь/к/файлам /путь/для/сохранения --table-list=ACTSTAT,ADDROBJ,CENTERST
+  # Простейший вариант
+  $ ru_address /путь/к/файлам /путь/для/сохранения /путь/к/xsd-схеме
+  # С ограниченным списком таблиц
+  $ ru_address /путь/к/файлам /путь/для/сохранения /путь/к/xsd-схеме --table=ADDHOUSE_TYPES --table=HOUSE_TYPES
+  # С ограниченным списком регионов
+  $ ru_address /путь/к/файлам /путь/для/сохранения /путь/к/xsd-схеме --region=01 --region=02

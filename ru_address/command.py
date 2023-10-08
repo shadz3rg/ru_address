@@ -1,11 +1,10 @@
 import time
 import os.path
 import click
-from ru_address.converter import Converter
-from ru_address.converter import Output
 from ru_address.common import Common
 from ru_address import __version__
 from ru_address.core import Core
+from ru_address.core import Output
 from ru_address.errors import UnknownPlatformError
 from ru_address.schema import ConverterRegistry as SchemaConverterRegistry
 from ru_address.dump import ConverterRegistry as DumpConverterRegistry, regions_from_directory
@@ -54,12 +53,12 @@ def schema(target, table, no_keys, encoding, source_path, output_path):
     if os.path.isdir(output_path):
         for key, value in output.items():
             f = open(os.path.join(output_path, f'{key}.{converter.get_extension()}'), "w")
-            # TODO: Add header
+            f.write(Core.compose_copyright())
             f.write(value)
             f.close()
     else:
         f = open(output_path, "w")
-        # TODO: Add header
+        f.write(Core.compose_copyright())
         f.write(''.join(output.values()))
         f.close()
 
@@ -93,11 +92,11 @@ def dump(target, region, table, source_path, output_path, schema_path):
         if table_name in table:
             Common.cli_output(f'Processing common table `{table_name}`')
             file = output.open_dump_file(table_name)
-            file.write(Converter.compose_copyright())
-            file.write(Converter.compose_dump_header(encoding))
+            file.write(Core.compose_copyright())
+            file.write(converter.compose_dump_header())
             # TODO Batch size via ENV param
             converter.convert_table(file, table_name, 500)
-            file.write(Converter.compose_dump_footer())
+            file.write(converter.compose_dump_footer())
             file.close()
 
     if len(region) == 0:
@@ -109,11 +108,11 @@ def dump(target, region, table, source_path, output_path, schema_path):
             if table_name in table:
                 Common.cli_output(f'Processing table `{table_name}`')
                 file = output.open_dump_file(table_name, _region)
-                file.write(Converter.compose_copyright())
-                file.write(Converter.compose_dump_header(encoding))
+                file.write(Core.compose_copyright())
+                file.write(converter.compose_dump_header())
                 # TODO Batch size via ENV param
                 converter.convert_table(file, table_name, 500, _region)
-                file.write(Converter.compose_dump_footer())
+                file.write(converter.compose_dump_footer())
                 file.close()
 
 

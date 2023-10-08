@@ -9,17 +9,16 @@ from ru_address.core import Core
 from ru_address.errors import UnknownPlatformError
 from ru_address.schema import ConverterRegistry as SchemaConverterRegistry
 from ru_address.dump import ConverterRegistry as DumpConverterRegistry, regions_from_directory
+from functools import update_wrapper
 
 
-# TODO: Add summary for each command
 def command_summary(f):
     def wrapper(**kwargs):
         start_time = time.time()
         f(**kwargs)
         Common.show_memory_usage()
-        time_measure = time.time() - start_time
-        print(f"{round(time_measure, 2)} s")
-    return wrapper
+        Common.show_execution_time(start_time)
+    return update_wrapper(wrapper, f)
 
 
 @click.group()
@@ -37,6 +36,7 @@ def cli():
 @click.option('--encoding', type=str, default='utf8mb4', help='Default table encoding')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
+@command_summary
 def schema(target, table, no_keys, encoding, source_path, output_path):
     """
     Convert XSD schema into target platform definitions.
@@ -72,6 +72,7 @@ def schema(target, table, no_keys, encoding, source_path, output_path):
 @click.argument('output_path', type=click.types.Path(exists=True, file_okay=True, readable=True, writable=True))
 # TODO: Same by default
 @click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), default=None)
+@command_summary
 def dump(target, region, table, source_path, output_path, schema_path):
     """
     Convert tables content into target platform dump file.

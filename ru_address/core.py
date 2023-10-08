@@ -1,3 +1,7 @@
+import datetime
+import os
+from ru_address import __version__
+
 
 class Core:
     KNOWN_ENTITIES = [
@@ -62,3 +66,46 @@ class Core:
     @staticmethod
     def get_known_tables():
         return Core.COMMON_TABLE_LIST | Core.REGION_TABLE_LIST
+
+    @staticmethod
+    def compose_copyright():
+        """ Сообщение в заголовок сгенерированного файла """
+
+        now = datetime.datetime.now()
+        version_string = f'v{__version__} -- get latest version @ https://github.com/shadz3rg/ru_address'
+        generation_ts = f'generation timestamp: {str(now)}'
+
+        header = (
+            "-- {} --\n"
+            "-- {} --\n"
+            "-- {}{} --\n"
+            "-- {} --\n\n"
+        )
+
+        return header.format(
+            '-' * len(version_string),
+            version_string,
+            generation_ts,
+            ' ' * (len(version_string) - len(generation_ts)),
+            '-' * len(version_string)
+        )
+
+
+class Output:
+    """Conversion result helper"""
+    SINGLE_FILE = 0
+    FILE_PER_TABLE = 1
+
+    def __init__(self, output_path, mode):
+        self.output_path = output_path
+        self.mode = mode
+
+    def open_dump_file(self, table_name, sub_dir=None):
+        filename = f'{table_name}.sql'
+        if sub_dir:
+            if not os.path.exists(os.path.join(self.output_path, sub_dir)):
+                os.mkdir(os.path.join(self.output_path, sub_dir))
+            filepath = os.path.join(self.output_path, sub_dir, filename)
+        else:
+            filepath = os.path.join(self.output_path, filename)
+        return open(filepath, 'w', encoding='utf-8')

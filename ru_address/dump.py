@@ -63,6 +63,16 @@ class BaseDumpConverter(ABC):
     def get_extension() -> str:
         pass
 
+    @staticmethod
+    @abstractmethod
+    def compose_dump_header() -> str:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def compose_dump_footer() -> str:
+        pass
+
 
 class SqlConverter(BaseDumpConverter):
     """
@@ -87,6 +97,24 @@ class SqlConverter(BaseDumpConverter):
     def get_extension() -> str:
         return 'sql'
 
+    @staticmethod
+    def compose_dump_header() -> str:
+        """ Подготовка к импорту """
+        encoding = "utf8mb4"
+        header = ("/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n"
+                  "/*!40101 SET NAMES {} */;\n"
+                  "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n"
+                  "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n")
+        return header.format(encoding)
+
+    @staticmethod
+    def compose_dump_footer() -> str:
+        """ Завершение импорта """
+        footer = ("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;\n"
+                  "/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;\n"
+                  "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;")
+        return footer
+
 
 class PlainCommaConverter(BaseDumpConverter):
     """
@@ -97,7 +125,15 @@ class PlainCommaConverter(BaseDumpConverter):
 
     @staticmethod
     def get_extension() -> str:
-        return 'sql'
+        raise NotImplementedError
+
+    @staticmethod
+    def compose_dump_header() -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def compose_dump_footer() -> str:
+        raise NotImplementedError
 
 
 class PlainTabConverter(BaseDumpConverter):
@@ -109,4 +145,12 @@ class PlainTabConverter(BaseDumpConverter):
 
     @staticmethod
     def get_extension() -> str:
-        return 'sql'
+        raise NotImplementedError
+
+    @staticmethod
+    def compose_dump_header() -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def compose_dump_footer() -> str:
+        raise NotImplementedError

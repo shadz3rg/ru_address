@@ -31,39 +31,24 @@
                 </xsl:when>
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:byte'">INT(1)</xsl:when>
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:string'">
-
-                    <!-- TODO: Length variable -->
                     <xsl:choose>
                         <xsl:when test="xs:simpleType/xs:restriction/xs:maxLength">
-                            <xsl:choose>
-                                <xsl:when test="xs:simpleType/xs:restriction/xs:maxLength/@value > 255">
-                                    <xsl:text>TEXT</xsl:text>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:text>VARCHAR(</xsl:text>
-                                    <xsl:value-of select="xs:simpleType/xs:restriction/xs:maxLength/@value" />
-                                    <xsl:text>)</xsl:text>
-                                </xsl:otherwise>
-                            </xsl:choose>
+                            <xsl:call-template name="type-string">
+                                <xsl:with-param name="length" select="xs:simpleType/xs:restriction/xs:maxLength/@value" />
+                            </xsl:call-template>
                         </xsl:when>
                         <xsl:when test="xs:simpleType/xs:restriction/xs:length">
-                            <xsl:choose>
-                                <xsl:when test="xs:simpleType/xs:restriction/xs:length/@value > 255">
-                                    <xsl:text>TEXT</xsl:text>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:text>VARCHAR(</xsl:text>
-                                    <xsl:value-of select="xs:simpleType/xs:restriction/xs:length/@value" />
-                                    <xsl:text>)</xsl:text>
-                                </xsl:otherwise>
-                            </xsl:choose>
+                            <xsl:call-template name="type-string">
+                                <xsl:with-param name="length" select="xs:simpleType/xs:restriction/xs:length/@value" />
+                            </xsl:call-template>
                         </xsl:when>
                         <xsl:otherwise>
-                             <xsl:text>VARCHAR(128)</xsl:text>
+                            <xsl:call-template name="type-string">
+                                <xsl:with-param name="length" select="128" />
+                            </xsl:call-template>
                         </xsl:otherwise>
                     </xsl:choose>
-
-                    </xsl:when>
+                </xsl:when>
                 <xsl:when test="xs:simpleType/xs:restriction/@base='xs:date'">DATE</xsl:when>
                 <xsl:when test="@type='xs:date'">DATE</xsl:when>
                 <xsl:when test="@type='xs:boolean'">INT(1)</xsl:when>
@@ -117,5 +102,17 @@
 
         <!-- separate table definitions -->
         <xsl:text>&#xa;</xsl:text>
+    </xsl:template>
+
+    <xsl:template name="type-string">
+        <xsl:param name="length"/>
+        <xsl:choose>
+            <xsl:when test="$length > 255">
+                <xsl:text>TEXT</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>VARCHAR(</xsl:text><xsl:value-of select="$length" /><xsl:text>)</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
 </xsl:stylesheet>

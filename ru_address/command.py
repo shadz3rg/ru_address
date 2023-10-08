@@ -71,13 +71,15 @@ def schema(target, tables, no_keys, source_path, output_path):
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 # TODO: Check is file for join SINGLE_FILE
 @click.argument('output_path', type=click.types.Path(exists=True, file_okay=True, readable=True, writable=True))
-# TODO: Same by default
-@click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), default=None)
+@click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), required=False)
 @command_summary
 def dump(target, regions, tables, source_path, output_path, schema_path):
     """
     Convert tables content into target platform dump file.
     """
+    if schema_path is None:
+        schema_path = source_path
+
     output = Output(output_path, Output.FILE_PER_TABLE)
 
     registry = DumpConverterRegistry()

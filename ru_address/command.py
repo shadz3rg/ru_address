@@ -1,5 +1,5 @@
 import time
-import os.path
+import os
 import click
 from ru_address.common import Common
 from ru_address import __version__
@@ -22,9 +22,11 @@ def command_summary(f):
 
 @click.group(invoke_without_command=True, no_args_is_help=True)
 @click.version_option(__version__)
+@click.option("-e", "--env", type=(str, str), multiple=True, help='Pass env-params')
 @click.pass_context
-def cli(_):
-    pass
+def cli(_, env):
+    for k, v in env:
+        os.environ.setdefault(k, v)
 
 
 @cli.command()

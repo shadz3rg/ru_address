@@ -32,15 +32,13 @@ def cli(_, env):
 @cli.command()
 @click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms()),
               default='mysql', help='Target DB')
-@click.option('--table', type=str, multiple=True, default=Core.get_known_tables().keys(),
+@click.option('-t', '--table', 'tables', type=str, multiple=True, default=Core.get_known_tables().keys(),
               help='Limit table list to process')
 @click.option('--no-keys', is_flag=True, help='Exclude keys && column index')
-# TODO Move ENCODING to ENV params
-@click.option('--encoding', type=str, default='utf8mb4', help='Default table encoding')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
 @command_summary
-def schema(target, table, no_keys, encoding, source_path, output_path):
+def schema(target, tables, no_keys, source_path, output_path):
     """
     Convert XSD schema into target platform definitions.
     Get latest schema @ https://fias.nalog.ru/docs/gar_schemas.zip
@@ -51,7 +49,7 @@ def schema(target, table, no_keys, encoding, source_path, output_path):
         raise UnknownPlatformError()
 
     converter = _converter()
-    output = converter.process(source_path, table, not no_keys)
+    output = converter.process(source_path, tables, not no_keys)
     if os.path.isdir(output_path):
         for key, value in output.items():
             f = open(os.path.join(output_path, f'{key}.{converter.get_extension()}'), "w")
@@ -68,15 +66,15 @@ def schema(target, table, no_keys, encoding, source_path, output_path):
 @click.command()
 @click.option('--target',  type=click.Choice(DumpConverterRegistry.get_available_platforms()),
               default='sql', help='Target dump format')
-@click.option('--region', type=str, multiple=True, default=[], help='Limit region list to process')
-@click.option('--table', type=str, multiple=True, default=Core.get_known_tables(), help='Limit table list to process')
+@click.option('-r', '--region', 'regions', type=str, multiple=True, default=[], help='Limit region list to process')
+@click.option('-t', '--table', 'tables', type=str, multiple=True, default=Core.get_known_tables(), help='Limit table list to process')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 # TODO: Check is file for join SINGLE_FILE
 @click.argument('output_path', type=click.types.Path(exists=True, file_okay=True, readable=True, writable=True))
 # TODO: Same by default
 @click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), default=None)
 @command_summary
-def dump(target, region, table, source_path, output_path, schema_path):
+def dump(target, regions, tables, source_path, output_path, schema_path):
     """
     Convert tables content into target platform dump file.
     """
@@ -90,7 +88,7 @@ def dump(target, region, table, source_path, output_path, schema_path):
     converter = _converter(source_path, schema_path)
 
     for table_name in Core.COMMON_TABLE_LIST:
-        if table_name in table:
+        if table_name in tables:
             Common.cli_output(f'Processing common table `{table_name}`')
             file = output.open_dump_file(table_name)
             file.write(Core.compose_copyright())
@@ -99,18 +97,18 @@ def dump(target, region, table, source_path, output_path, schema_path):
             file.write(converter.compose_dump_footer())
             file.close()
 
-    if len(region) == 0:
-        region = regions_from_directory(source_path)
+    if len(regions) == 0:
+        regions = regions_from_directory(source_path)
 
-    for _region in region:
-        Common.cli_output(f'Processing region directory `{_region}`')
+    for region in regions:
+        Common.cli_output(f'Processing region directory `{region}`')
         for table_name in Core.REGION_TABLE_LIST:
-            if table_name in table:
+            if table_name in tables:
                 Common.cli_output(f'Processing table `{table_name}`')
-                file = output.open_dump_file(table_name, _region)
+                file = output.open_dump_file(table_name, region)
                 file.write(Core.compose_copyright())
                 file.write(converter.compose_dump_header())
-                converter.convert_table(file, table_name, _region)
+                converter.convert_table(file, table_name, region)
                 file.write(converter.compose_dump_footer())
                 file.close()
 

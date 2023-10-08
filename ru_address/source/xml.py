@@ -81,7 +81,8 @@ class Data:
 
         # Завершаем файл
         print("")  # Перенос после прогресс-бара
-        print(";", file=dump_file)  # Заканчиваем последний INSERT запрос
+        if current_row != 0:
+            print(";", file=dump_file)  # Заканчиваем последний INSERT запрос
         # Вспомогательные запросы на манер бэкапов из phpMyAdmin
         print(f'/*!40000 ALTER TABLE `{self.table_name}` ENABLE KEYS */;', file=dump_file)
 

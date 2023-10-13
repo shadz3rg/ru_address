@@ -4,8 +4,8 @@ import click
 from ru_address.common import Common
 from ru_address import __version__
 from ru_address.core import Core
-from ru_address.core import Output
 from ru_address.errors import UnknownPlatformError
+from ru_address.output import OutputRegistry
 from ru_address.schema import ConverterRegistry as SchemaConverterRegistry
 from ru_address.dump import ConverterRegistry as DumpConverterRegistry, regions_from_directory
 from functools import update_wrapper
@@ -30,7 +30,7 @@ def cli(_, env):
 
 
 @cli.command()
-@click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms()),
+@click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms().keys()),
               default='mysql', help='Target DB')
 @click.option('-t', '--table', 'tables', type=str, multiple=True, default=Core.get_known_tables().keys(),
               help='Limit table list to process')
@@ -64,55 +64,42 @@ def schema(target, tables, no_keys, source_path, output_path):
 
 
 @click.command()
-@click.option('--target',  type=click.Choice(DumpConverterRegistry.get_available_platforms()),
+@click.option('--target', type=click.Choice(DumpConverterRegistry.get_available_platforms().keys()),
               default='sql', help='Target dump format')
 @click.option('-r', '--region', 'regions', type=str, multiple=True, default=[], help='Limit region list to process')
 @click.option('-t', '--table', 'tables', type=str, multiple=True, default=Core.get_known_tables(), help='Limit table list to process')
+@click.option('-m', '--mode', type=click.Choice(OutputRegistry.get_available_modes().keys()), default='region_tree', help='Only if output_path is valid directory')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
-# TODO: Check is file for join SINGLE_FILE
-@click.argument('output_path', type=click.types.Path(exists=True, file_okay=True, readable=True, writable=True))
+@click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
 @click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), required=False)
 @command_summary
-def dump(target, regions, tables, source_path, output_path, schema_path):
+def dump(target, regions, tables, mode, source_path, output_path, schema_path):
     """
     Convert tables content into target platform dump file.
     """
     if schema_path is None:
         schema_path = source_path
 
-    output = Output(output_path, Output.FILE_PER_TABLE)
-
-    registry = DumpConverterRegistry()
-    _converter = registry.get_converter(target)
-    if _converter is None:
-        raise UnknownPlatformError()
-
-    converter = _converter(source_path, schema_path)
-
-    for table_name in Core.COMMON_TABLE_LIST:
-        if table_name in tables:
-            Common.cli_output(f'Processing common table `{table_name}`')
-            file = output.open_dump_file(table_name)
-            file.write(Core.compose_copyright())
-            file.write(converter.compose_dump_header())
-            converter.convert_table(file, table_name)
-            file.write(converter.compose_dump_footer())
-            file.close()
-
     if len(regions) == 0:
         regions = regions_from_directory(source_path)
 
-    for region in regions:
-        Common.cli_output(f'Processing region directory `{region}`')
-        for table_name in Core.REGION_TABLE_LIST:
-            if table_name in tables:
-                Common.cli_output(f'Processing table `{table_name}`')
-                file = output.open_dump_file(table_name, region)
-                file.write(Core.compose_copyright())
-                file.write(converter.compose_dump_header())
-                converter.convert_table(file, table_name, region)
-                file.write(converter.compose_dump_footer())
-                file.close()
+    converter_registry = DumpConverterRegistry()
+    _converter = converter_registry.get_converter(target)
+    if _converter is None:
+        raise UnknownPlatformError()
+    converter = _converter(source_path, schema_path)
+
+    #
+    if not os.path.isdir(output_path):
+        mode = 'direct'
+
+    output_registry = OutputRegistry()
+    _output = output_registry.get_output(mode)
+    if _output is None:
+        raise UnknownPlatformError()
+    print(_output)
+    output = _output(converter, output_path)
+    output.write(tables, regions)
 
 
 cli.add_command(schema)

@@ -1,12 +1,7 @@
 import glob
 import os.path
 from abc import ABC, abstractmethod
-from collections import OrderedDict
-from typing import List
-import lxml.etree as et
-from ru_address import package_directory
 from ru_address.source.xml import Definition, Data
-from ru_address.index import Index
 from ru_address.core import Core
 
 
@@ -110,9 +105,9 @@ class SqlConverter(BaseDumpConverter):
 
     def compose_dump_footer(self) -> str:
         """ Завершение импорта """
-        footer = ("\n/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;\n"
+        footer = ("/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;\n"
                   "/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;\n"
-                  "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;")
+                  "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n")
         return footer
 
 

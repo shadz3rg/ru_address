@@ -1,3 +1,6 @@
+import datetime
+from ru_address import __version__
+
 
 class Core:
     KNOWN_ENTITIES = [
@@ -62,3 +65,32 @@ class Core:
     @staticmethod
     def get_known_tables():
         return Core.COMMON_TABLE_LIST | Core.REGION_TABLE_LIST
+
+    @staticmethod
+    def compose_copyright():
+        """ Сообщение в заголовок сгенерированного файла """
+
+        now = datetime.datetime.now()
+        version_string = f'ru_address v{__version__} -- get latest version at https://github.com/shadz3rg/ru_address'
+        generation_ts = f'generated at {str(now)}'
+
+        header = (
+            "-- {} --\n"
+            "-- {} --\n"
+            "-- {}{} --\n"
+            "-- {} --\n\n"
+        )
+
+        return header.format(
+            '-' * len(version_string),
+            version_string,
+            generation_ts,
+            ' ' * (len(version_string) - len(generation_ts)),
+            '-' * len(version_string)
+        )
+
+    @staticmethod
+    def compose_table_separator(table_name, region=None):
+        if region is not None:
+            return f"-- Region: `{region}`, Table: `{table_name}`\n"
+        return f"-- Table: `{table_name}`\n"

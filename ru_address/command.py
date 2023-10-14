@@ -1,43 +1,44 @@
 import time
-import os.path
+import os
 import click
-from ru_address.converter import Converter
-from ru_address.converter import Output
 from ru_address.common import Common
 from ru_address import __version__
 from ru_address.core import Core
 from ru_address.errors import UnknownPlatformError
+from ru_address.output import OutputRegistry
 from ru_address.schema import ConverterRegistry as SchemaConverterRegistry
 from ru_address.dump import ConverterRegistry as DumpConverterRegistry, regions_from_directory
+from functools import update_wrapper
 
 
-# TODO: Add summary for each command
 def command_summary(f):
     def wrapper(**kwargs):
         start_time = time.time()
         f(**kwargs)
         Common.show_memory_usage()
-        time_measure = time.time() - start_time
-        print(f"{round(time_measure, 2)} s")
-    return wrapper
+        Common.show_execution_time(start_time)
+    return update_wrapper(wrapper, f)
 
 
-@click.group()
-def cli():
-    pass
+@click.group(invoke_without_command=True, no_args_is_help=True)
+@click.version_option(__version__)
+@click.option("-e", "--env", type=(str, str), multiple=True, help='Pass env-params')
+@click.pass_context
+def cli(_, env):
+    for k, v in env:
+        os.environ.setdefault(k, v)
 
 
 @cli.command()
-@click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms()),
+@click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms().keys()),
               default='mysql', help='Target DB')
-@click.option('--table', type=str, multiple=True, default=Core.get_known_tables().keys(),
+@click.option('-t', '--table', 'tables', type=str, multiple=True, default=Core.get_known_tables().keys(),
               help='Limit table list to process')
 @click.option('--no-keys', is_flag=True, help='Exclude keys && column index')
-# TODO Move ENCODING to ENV params
-@click.option('--encoding', type=str, default='utf8mb4', help='Default table encoding')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
-def schema(target, table, no_keys, encoding, source_path, output_path):
+@command_summary
+def schema(target, tables, no_keys, source_path, output_path):
     """
     Convert XSD schema into target platform definitions.
     Get latest schema @ https://fias.nalog.ru/docs/gar_schemas.zip
@@ -48,70 +49,57 @@ def schema(target, table, no_keys, encoding, source_path, output_path):
         raise UnknownPlatformError()
 
     converter = _converter()
-    output = converter.process(source_path, table, not no_keys)
+    output = converter.process(source_path, tables, not no_keys)
     if os.path.isdir(output_path):
         for key, value in output.items():
             f = open(os.path.join(output_path, f'{key}.{converter.get_extension()}'), "w")
-            # TODO: Add header
+            f.write(Core.compose_copyright())
             f.write(value)
             f.close()
     else:
         f = open(output_path, "w")
-        # TODO: Add header
+        f.write(Core.compose_copyright())
         f.write(''.join(output.values()))
         f.close()
 
 
 @click.command()
-@click.option('--target',  type=click.Choice(DumpConverterRegistry.get_available_platforms()),
+@click.option('--target', type=click.Choice(DumpConverterRegistry.get_available_platforms().keys()),
               default='sql', help='Target dump format')
-@click.option('--region', type=str, multiple=True, default=[], help='Limit region list to process')
-@click.option('--table', type=str, multiple=True, default=Core.get_known_tables(), help='Limit table list to process')
+@click.option('-r', '--region', 'regions', type=str, multiple=True, default=[], help='Limit region list to process')
+@click.option('-t', '--table', 'tables', type=str, multiple=True, default=Core.get_known_tables(), help='Limit table list to process')
+@click.option('-m', '--mode', type=click.Choice(OutputRegistry.get_available_modes().keys()), default='region_tree', help='Only if output_path is valid directory')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
-# TODO: Check is file for join SINGLE_FILE
-@click.argument('output_path', type=click.types.Path(exists=True, file_okay=True, readable=True, writable=True))
-# TODO: Same by default
-@click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), default=None)
-def dump(target, region, table, source_path, output_path, schema_path):
+@click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
+@click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), required=False)
+@command_summary
+def dump(target, regions, tables, mode, source_path, output_path, schema_path):
     """
     Convert tables content into target platform dump file.
     """
-    output = Output(output_path, Output.FILE_PER_TABLE)
-    encoding = 'utf8mb4'
+    if schema_path is None:
+        schema_path = source_path
 
-    registry = DumpConverterRegistry()
-    _converter = registry.get_converter(target)
+    if len(regions) == 0:
+        regions = regions_from_directory(source_path)
+
+    converter_registry = DumpConverterRegistry()
+    _converter = converter_registry.get_converter(target)
     if _converter is None:
         raise UnknownPlatformError()
-
     converter = _converter(source_path, schema_path)
 
-    for table_name in Core.COMMON_TABLE_LIST:
-        if table_name in table:
-            Common.cli_output(f'Processing common table `{table_name}`')
-            file = output.open_dump_file(table_name)
-            file.write(Converter.compose_copyright())
-            file.write(Converter.compose_dump_header(encoding))
-            # TODO Batch size via ENV param
-            converter.convert_table(file, table_name, 500)
-            file.write(Converter.compose_dump_footer())
-            file.close()
+    #
+    if not os.path.isdir(output_path):
+        mode = 'direct'
 
-    if len(region) == 0:
-        region = regions_from_directory(source_path)
-
-    for _region in region:
-        Common.cli_output(f'Processing region directory `{_region}`')
-        for table_name in Core.REGION_TABLE_LIST:
-            if table_name in table:
-                Common.cli_output(f'Processing table `{table_name}`')
-                file = output.open_dump_file(table_name, _region)
-                file.write(Converter.compose_copyright())
-                file.write(Converter.compose_dump_header(encoding))
-                # TODO Batch size via ENV param
-                converter.convert_table(file, table_name, 500, _region)
-                file.write(Converter.compose_dump_footer())
-                file.close()
+    output_registry = OutputRegistry()
+    _output = output_registry.get_output(mode)
+    if _output is None:
+        raise UnknownPlatformError()
+    print(_output)
+    output = _output(converter, output_path)
+    output.write(tables, regions)
 
 
 cli.add_command(schema)

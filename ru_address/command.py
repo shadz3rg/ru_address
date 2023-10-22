@@ -100,8 +100,14 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
     _output = output_registry.get_output(mode)
     if _output is None:
         raise UnknownPlatformError()
-    print(_output)
-    output = _output(converter, output_path)
+
+    include_meta = True
+    if target in ['csv', 'tsv']:
+        include_meta = False
+        if mode != 'region_tree':
+            raise UnknownPlatformError("Cant mix multiple tables in single file")
+
+    output = _output(converter, output_path, include_meta)
     output.write(tables, regions)
 
 

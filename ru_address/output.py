@@ -21,9 +21,10 @@ class OutputRegistry:
 
 
 class BaseOutput(ABC):
-    def __init__(self, converter, output_path):
+    def __init__(self, converter, output_path, include_meta=True):
         self.converter = converter
         self.output_path = output_path
+        self.include_meta = include_meta
 
     @abstractmethod
     def write(self, tables, regions):

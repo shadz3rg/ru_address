@@ -3,6 +3,7 @@ import os.path
 from abc import ABC, abstractmethod
 from ru_address.source.xml import Definition, Data
 from ru_address.core import Core
+from ru_address.common import TableRepresentation
 
 
 def regions_from_directory(source_path):
@@ -22,7 +23,8 @@ class ConverterRegistry:
     @staticmethod
     def get_available_platforms():
         return {
-            'sql':  SqlConverter,
+            'mysql':  MyConverter,
+            'psql':  PostgresConverter,
             'csv':  PlainCommaConverter,
             'tsv':  PlainTabConverter,
         }
@@ -59,6 +61,11 @@ class BaseDumpConverter(ABC):
     def get_extension() -> str:
         pass
 
+    @staticmethod
+    @abstractmethod
+    def get_representation() -> TableRepresentation:
+        pass
+
     @abstractmethod
     def compose_dump_header(self) -> str:
         pass
@@ -68,7 +75,7 @@ class BaseDumpConverter(ABC):
         pass
 
 
-class SqlConverter(BaseDumpConverter):
+class MyConverter(BaseDumpConverter):
     """
     MySQL (and MySQL forks) compatible converter
     """
@@ -89,11 +96,33 @@ class SqlConverter(BaseDumpConverter):
 
         source_filepath = self.get_source_filepath(path, table_name, 'xml')
         data = Data(table_name, source_filepath)
-        data.convert_and_dump_v2(dump_file, definition, self.batch_size)
+        data.convert_and_dump_v2(dump_file, definition, self.batch_size, self.get_representation())
 
     @staticmethod
     def get_extension() -> str:
         return 'sql'
+
+    @staticmethod
+    def get_representation() -> TableRepresentation:
+        def table_start_handler(table_name) -> str:
+            return (
+                '\n'
+                f'/*!40000 ALTER TABLE `{table_name}` DISABLE KEYS */;\n'
+            )
+
+        def table_end_handler(table_name) -> str:
+            return (
+                f'/*!40000 ALTER TABLE `{table_name}` ENABLE KEYS */;\n'
+            )
+
+        def batch_start_handler(table_name, fields):
+            field_query = "`, `".join(fields)
+            return (
+                f'INSERT INTO `{table_name}` (`{field_query}`) VALUES \n'
+            )
+
+        return TableRepresentation(table_start_handler=table_start_handler, table_end_handler=table_end_handler,
+                                   batch_start_handler=batch_start_handler)
 
     def compose_dump_header(self) -> str:
         """ Подготовка к импорту """
@@ -111,37 +140,118 @@ class SqlConverter(BaseDumpConverter):
         return footer
 
 
-class PlainCommaConverter(BaseDumpConverter):
-    """
-    PostgreSQL compatible converter
-    """
+class PostgresConverter(BaseDumpConverter):
+    def __init__(self, source_path, schema_path):
+        BaseDumpConverter.__init__(self, source_path, schema_path)
+        # self.encoding = os.environ.get("RA_SQL_ENCODING", "utf8mb4")
+
     def convert_table(self, file, table_name, sub=None):
-        raise NotImplementedError
+        dump_file = file
+
+        tables = Core.get_known_tables()
+        source_filepath = self.get_source_filepath(self.schema_path, tables[table_name], 'xsd')
+        definition = Definition(table_name, source_filepath)
+
+        path = self.source_path
+        if sub is not None:
+            path = os.path.join(self.source_path, sub)
+
+        source_filepath = self.get_source_filepath(path, table_name, 'xml')
+        data = Data(table_name, source_filepath)
+        data.convert_and_dump_v2(dump_file, definition, self.batch_size, self.get_representation())
 
     @staticmethod
     def get_extension() -> str:
-        raise NotImplementedError
+        return 'sql'
+
+    @staticmethod
+    def get_representation() -> TableRepresentation:
+        def batch_start_handler(table_name, fields):
+            field_query = "\", \"".join(fields)
+            return (
+                f'INSERT INTO "{table_name}" ("{field_query}") VALUES \n'
+            )
+
+        return TableRepresentation(quotes="'", bool_repr=("'0'", "'1'"), batch_start_handler=batch_start_handler)
 
     def compose_dump_header(self) -> str:
-        raise NotImplementedError
+        return ""
 
     def compose_dump_footer(self) -> str:
-        raise NotImplementedError
+        return ""
+
+
+class PlainCommaConverter(BaseDumpConverter):
+    """
+    CSV compatible converter
+    See: https://datatracker.ietf.org/doc/html/rfc4180
+    """
+    def __init__(self, source_path, schema_path):
+        BaseDumpConverter.__init__(self, source_path, schema_path)
+
+    def convert_table(self, file, table_name, sub=None):
+        dump_file = file
+
+        tables = Core.get_known_tables()
+        source_filepath = self.get_source_filepath(self.schema_path, tables[table_name], 'xsd')
+        definition = Definition(table_name, source_filepath)
+
+        path = self.source_path
+        if sub is not None:
+            path = os.path.join(self.source_path, sub)
+
+        source_filepath = self.get_source_filepath(path, table_name, 'xml')
+        data = Data(table_name, source_filepath)
+        data.convert_and_dump_v2(dump_file, definition, self.batch_size, self.get_representation())
+
+    @staticmethod
+    def get_extension() -> str:
+        return 'csv'
+
+    @staticmethod
+    def get_representation() -> TableRepresentation:
+        return TableRepresentation(quotes="\"", delimiter=",", null_repr="\\N",
+                                   row_indent="", row_parentheses=("", ""),
+                                   line_ending="\n", line_ending_last="\n")
+
+    def compose_dump_header(self) -> str:
+        return ""
+
+    def compose_dump_footer(self) -> str:
+        return ""
 
 
 class PlainTabConverter(BaseDumpConverter):
     """
-    Clickhouse compatible converter
+    TSV compatible converter
     """
     def convert_table(self, file, table_name, sub=None):
-        raise NotImplementedError
+        dump_file = file
+
+        tables = Core.get_known_tables()
+        source_filepath = self.get_source_filepath(self.schema_path, tables[table_name], 'xsd')
+        definition = Definition(table_name, source_filepath)
+
+        path = self.source_path
+        if sub is not None:
+            path = os.path.join(self.source_path, sub)
+
+        source_filepath = self.get_source_filepath(path, table_name, 'xml')
+        data = Data(table_name, source_filepath)
+        data.convert_and_dump_v2(dump_file, definition, self.batch_size, self.get_representation())
 
     @staticmethod
     def get_extension() -> str:
-        raise NotImplementedError
+        return 'tsv'
+
+    @staticmethod
+    def get_representation() -> TableRepresentation:
+        return TableRepresentation(quotes="", delimiter="\t", null_repr="\\N",
+                                   row_indent="", row_parentheses=("", ""),
+                                   line_ending="\n", line_ending_last="\n")
 
     def compose_dump_header(self) -> str:
-        raise NotImplementedError
+        return ""
 
     def compose_dump_footer(self) -> str:
-        raise NotImplementedError
+        return ""

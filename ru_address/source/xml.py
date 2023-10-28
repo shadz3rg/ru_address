@@ -3,6 +3,7 @@ import xml.sax
 import lxml.etree as et
 from ru_address.common import Common
 from ru_address.common import DataSource
+from ru_address.common import TableRepresentation
 from ru_address.errors import DefinitionError
 
 
@@ -21,10 +22,79 @@ class Data:
 
         source.close()
 
-    def convert_and_dump_v2(self, dump_file, definition, bulk_size):
+    def convert_and_dump_v2(self, dump_file, definition, bulk_size, table_representation: TableRepresentation):
+
+        if table_representation.table_start_handler:
+            dump_file.write(table_representation.table_start_handler(self.table_name))
+
+        table_fields = definition.get_table_fields()
+        current_row = 0
+        context = et.iterparse(self.data_source, events=('end',), tag=definition.get_entity_tag())
+
+        for _, elem in context:
+            content = []
+
+            value_query_parts = []
+            for field in table_fields:
+                value = table_representation.null_repr
+                if elem.get(field) is not None:
+                    value = elem.get(field)
+                    if value == "false":
+                        value = table_representation.bool_repr[0]
+                    elif value == "true":
+                        value = table_representation.bool_repr[1]
+                    else:
+                        # SAX автоматически декодирует XML сущности, ломая запрос кавычками, workaround
+                        # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
+                        # value = value.replace('\\', '\\\\"').replace('"', '\\"')  # TODO Quotes
+                        value = f'{table_representation.quotes}{value}{table_representation.quotes}'
+                value_query_parts.append(value)
+
+            value_query = table_representation.delimiter.join(value_query_parts)
+
+            # Формируем запрос
+            until_new_bulk = current_row % bulk_size
+
+            # Заканчиваем предыдущую строку
+            if current_row != 0:
+                line_ending = table_representation.line_ending
+                if until_new_bulk == 0:
+                    line_ending = table_representation.line_ending_last
+                content.append(line_ending)
+
+            # Начинаем новый инсерт, если нужно
+            if current_row == 0 or until_new_bulk == 0:
+                if table_representation.batch_start_handler:
+                    content.append(table_representation.batch_start_handler(self.table_name, table_fields))
+
+            # Данные для вставки, подходящий delimiter ставится у следующей записи
+            content.append(f'{table_representation.row_indent}'
+                           f'{table_representation.row_parentheses[0]}'
+                           f'{value_query}'
+                           f'{table_representation.row_parentheses[1]}')
+
+            current_row += 1
+            if current_row % 10000 == 0:
+                print(f"\r{current_row}+ row", end="", flush=True)
+
+            dump_file.write(''.join(content))
+
+            elem.clear()
+            while elem.getprevious() is not None:
+                del elem.getparent()[0]
+
+        # Завершаем файл
+        print("")  # Перенос после прогресс-бара
+        if current_row != 0:
+            dump_file.write(table_representation.line_ending_last)  # Заканчиваем последний INSERT запрос
+
+        if table_representation.table_end_handler:
+            dump_file.write(table_representation.table_end_handler(self.table_name))
+
+    def convert_and_dump_v3(self, dump_file, definition, bulk_size):
 
         # Отключаем ключи перед началом импорта данных
-        print(f'/*!40000 ALTER TABLE `{self.table_name}` DISABLE KEYS */;', file=dump_file)
+        # print(f'/*!40000 ALTER TABLE `{self.table_name}` DISABLE KEYS */;', file=dump_file)
 
         table_fields = definition.get_table_fields()
         current_row = 0
@@ -41,12 +111,12 @@ class Data:
                 if elem.get(field) is not None:
                     value = elem.get(field)
                     if value == "true":
-                        value = "1"
+                        value = "'1'"
                     elif value == "false":
-                        value = "0"
+                        value = "'0'"
                     else:
                         value = value.replace('\\', '\\\\"').replace('"', '\\"')
-                        value = f'"{value}"'
+                        value = f'\'{value}\''
                 value_query_parts.append(value)
 
             value_query = ', '.join(value_query_parts)
@@ -63,8 +133,8 @@ class Data:
 
             # Начинаем новый инсерт, если нужно
             if current_row == 0 or until_new_bulk == 0:
-                field_query = "`, `".join(table_fields)
-                content.append(f'INSERT INTO `{self.table_name}` (`{ field_query}`) VALUES \n')
+                field_query = "\", \"".join(table_fields)
+                content.append(f'INSERT INTO "{self.table_name}" ("{field_query}") VALUES \n')
 
             # Данные для вставки, подходящий delimiter ставится у следующей записи
             content.append(f'\t({value_query})')
@@ -84,7 +154,7 @@ class Data:
         if current_row != 0:
             print(";", file=dump_file)  # Заканчиваем последний INSERT запрос
         # Вспомогательные запросы на манер бэкапов из phpMyAdmin
-        print(f'/*!40000 ALTER TABLE `{self.table_name}` ENABLE KEYS */;', file=dump_file)
+        # print(f'/*!40000 ALTER TABLE `{self.table_name}` ENABLE KEYS */;', file=dump_file)
 
 
 class DataHandler(xml.sax.handler.ContentHandler):

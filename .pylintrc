@@ -1,5 +1,5 @@
 [MASTER]
-disable=C0114,C0116,
+disable=C0114,C0116,R1732
 extension-pkg-allow-list=lxml
 [FORMAT]
 max-line-length=120

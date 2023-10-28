@@ -80,8 +80,8 @@ class MyConverter(BaseSchemaConverter):
     MySQL (and MySQL forks) compatible converter
     """
     def __init__(self):
-        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'mysql.schema.xsl')
-        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'mysql.index.xsl')
+        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'mysql.schema.xsl')
+        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'mysql.index.xsl')
 
     def convert_table(self, definition: Definition, table_name: str, include_keys: bool):
         stylesheet = et.parse(self.schema_stylesheet_file)
@@ -108,8 +108,8 @@ class PostgresConverter(BaseSchemaConverter):
     PostgreSQL compatible converter
     """
     def __init__(self):
-        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'postgres.schema.xsl')
-        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'postgres.index.xsl')
+        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'postgres.schema.xsl')
+        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'postgres.index.xsl')
 
     def convert_table(self, definition: Definition, table_name: str, include_keys: bool):
         stylesheet = et.parse(self.schema_stylesheet_file)
@@ -136,8 +136,8 @@ class ClickhouseConverter(BaseSchemaConverter):
     Clickhouse compatible converter
     """
     def __init__(self):
-        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'clickhouse.schema.xsl')
-        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'clickhouse.index.xsl')
+        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'clickhouse.schema.xsl')
+        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'clickhouse.index.xsl')
 
     def convert_table(self, definition: Definition, table_name: str, include_keys: bool):
         stylesheet = et.parse(self.schema_stylesheet_file)

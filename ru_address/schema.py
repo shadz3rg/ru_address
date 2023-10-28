@@ -135,8 +135,25 @@ class ClickhouseConverter(BaseSchemaConverter):
     """
     Clickhouse compatible converter
     """
+    def __init__(self):
+        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'clickhouse.schema.xsl')
+        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'clickhouse.index.xsl')
+
     def convert_table(self, definition: Definition, table_name: str, include_keys: bool):
-        raise NotImplementedError
+        stylesheet = et.parse(self.schema_stylesheet_file)
+        transform = et.XSLT(stylesheet)
+
+        plain_table_name = transform.strparam(table_name)
+        index = None
+
+        if include_keys:
+            index = transform.strparam(Index(self.index_stylesheet_file).build(definition.title_name))
+        # TODO: Add INCLUDE_DROP param
+        # TODO: Add TABLE_ENGINE param
+        # TODO: Add TABLE_ENCODING param
+        result = transform(definition.tree, table_name=plain_table_name, index=index)
+
+        return str(result)
 
     @staticmethod
     def get_extension() -> str:

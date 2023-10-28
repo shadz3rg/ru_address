@@ -96,7 +96,7 @@ class MyConverter(BaseDumpConverter):
 
         source_filepath = self.get_source_filepath(path, table_name, 'xml')
         data = Data(table_name, source_filepath)
-        data.convert_and_dump_v2(dump_file, definition, self.batch_size, self.get_representation())
+        data.convert_and_dump(dump_file, definition, self.batch_size, self.get_representation())
 
     @staticmethod
     def get_extension() -> str:
@@ -158,7 +158,7 @@ class PostgresConverter(BaseDumpConverter):
 
         source_filepath = self.get_source_filepath(path, table_name, 'xml')
         data = Data(table_name, source_filepath)
-        data.convert_and_dump_v2(dump_file, definition, self.batch_size, self.get_representation())
+        data.convert_and_dump(dump_file, definition, self.batch_size, self.get_representation())
 
     @staticmethod
     def get_extension() -> str:
@@ -202,7 +202,7 @@ class PlainCommaConverter(BaseDumpConverter):
 
         source_filepath = self.get_source_filepath(path, table_name, 'xml')
         data = Data(table_name, source_filepath)
-        data.convert_and_dump_v2(dump_file, definition, self.batch_size, self.get_representation())
+        data.convert_and_dump(dump_file, definition, self.batch_size, self.get_representation())
 
     @staticmethod
     def get_extension() -> str:
@@ -238,7 +238,7 @@ class PlainTabConverter(BaseDumpConverter):
 
         source_filepath = self.get_source_filepath(path, table_name, 'xml')
         data = Data(table_name, source_filepath)
-        data.convert_and_dump_v2(dump_file, definition, self.batch_size, self.get_representation())
+        data.convert_and_dump(dump_file, definition, self.batch_size, self.get_representation())
 
     @staticmethod
     def get_extension() -> str:

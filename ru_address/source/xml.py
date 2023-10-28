@@ -4,15 +4,15 @@ from ru_address.errors import DefinitionError
 
 
 class Data:
-    """XML data file handler"""
-    def __init__(self, table_name, source_file):
+    """ Конвертирует XML данные в настраиваемый текстовый формат """
+    def __init__(self, table_name, source_file, table_representation: TableRepresentation):
         self.table_name = table_name
         self.data_source = source_file
+        self.table_representation = table_representation
 
-    def convert_and_dump(self, dump_file, definition, bulk_size, table_representation: TableRepresentation):
-
-        if table_representation.table_start_handler:
-            dump_file.write(table_representation.table_start_handler(self.table_name))
+    def convert_and_dump(self, dump_file, definition, bulk_size):
+        if self.table_representation.table_start_handler:
+            dump_file.write(self.table_representation.table_start_handler(self.table_name))
 
         table_fields = definition.get_table_fields()
         current_row = 0
@@ -23,42 +23,42 @@ class Data:
 
             value_query_parts = []
             for field in table_fields:
-                value = table_representation.null_repr
+                value = self.table_representation.null_repr
                 if elem.get(field) is not None:
                     value = elem.get(field)
                     if value == "false":
-                        value = table_representation.bool_repr[0]
+                        value = self.table_representation.bool_repr[0]
                     elif value == "true":
-                        value = table_representation.bool_repr[1]
+                        value = self.table_representation.bool_repr[1]
                     else:
                         # SAX автоматически декодирует XML сущности, ломая запрос кавычками, workaround
                         # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
                         # value = value.replace('\\', '\\\\"').replace('"', '\\"')  # TODO Quotes
-                        value = f'{table_representation.quotes}{value}{table_representation.quotes}'
+                        value = f'{self.table_representation.quotes}{value}{self.table_representation.quotes}'
                 value_query_parts.append(value)
 
-            value_query = table_representation.delimiter.join(value_query_parts)
+            value_query = self.table_representation.delimiter.join(value_query_parts)
 
             # Формируем запрос
             until_new_bulk = current_row % bulk_size
 
             # Заканчиваем предыдущую строку
             if current_row != 0:
-                line_ending = table_representation.line_ending
+                line_ending = self.table_representation.line_ending
                 if until_new_bulk == 0:
-                    line_ending = table_representation.line_ending_last
+                    line_ending = self.table_representation.line_ending_last
                 content.append(line_ending)
 
             # Начинаем новый инсерт, если нужно
             if current_row == 0 or until_new_bulk == 0:
-                if table_representation.batch_start_handler:
-                    content.append(table_representation.batch_start_handler(self.table_name, table_fields))
+                if self.table_representation.batch_start_handler:
+                    content.append(self.table_representation.batch_start_handler(self.table_name, table_fields))
 
             # Данные для вставки, подходящий delimiter ставится у следующей записи
-            content.append(f'{table_representation.row_indent}'
-                           f'{table_representation.row_parentheses[0]}'
+            content.append(f'{self.table_representation.row_indent}'
+                           f'{self.table_representation.row_parentheses[0]}'
                            f'{value_query}'
-                           f'{table_representation.row_parentheses[1]}')
+                           f'{self.table_representation.row_parentheses[1]}')
 
             current_row += 1
             if current_row % 10000 == 0:
@@ -73,14 +73,14 @@ class Data:
         # Завершаем файл
         print("")  # Перенос после прогресс-бара
         if current_row != 0:
-            dump_file.write(table_representation.line_ending_last)  # Заканчиваем последний INSERT запрос
+            dump_file.write(self.table_representation.line_ending_last)  # Заканчиваем последний INSERT запрос
 
-        if table_representation.table_end_handler:
-            dump_file.write(table_representation.table_end_handler(self.table_name))
+        if self.table_representation.table_end_handler:
+            dump_file.write(self.table_representation.table_end_handler(self.table_name))
 
 
 class Definition:
-    """XML table schema handler"""
+    """ Представление XML схемы для разбора данных """
     def __init__(self, title_name, source_file):
         self.title_name = title_name
         self.tree = et.parse(source_file)

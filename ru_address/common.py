@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 import time
@@ -41,6 +42,19 @@ class Common:
     def show_execution_time(start_time):
         time_measure = time.time() - start_time
         print(f"> Execution time: {round(time_measure, 2)}s")
+
+    @staticmethod
+    def get_source_filepath(source_path, table, extension):
+        """ Ищем файл таблицы в папке с исходниками,
+        Названия файлов в непонятном формате, например AS_ACTSTAT_2_250_08_04_01_01.xsd"""
+        file = f'AS_{table}_2*.{extension}'
+        file_path = os.path.join(source_path, file)
+        found_files = glob.glob(file_path)
+        if len(found_files) == 1:
+            return found_files[0]
+        if len(found_files) > 1:
+            raise FileNotFoundError(f'More than one file found: {file_path}')
+        raise FileNotFoundError(f'Not found source file: {file_path}')
 
 
 class DataSource:

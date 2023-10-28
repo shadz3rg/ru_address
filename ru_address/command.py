@@ -86,12 +86,6 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
     if len(regions) == 0:
         regions = regions_from_directory(source_path)
 
-    converter_registry = DumpConverterRegistry()
-    _converter = converter_registry.get_converter(target)
-    if _converter is None:
-        raise UnknownPlatformError()
-    converter = _converter(source_path, schema_path)
-
     #
     if not os.path.isdir(output_path):
         mode = 'direct'
@@ -107,6 +101,7 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
         if mode != 'region_tree':
             raise UnknownPlatformError("Cant mix multiple tables in single file")
 
+    converter = DumpConverterRegistry.init_converter(target, source_path, schema_path)
     output = _output(converter, output_path, include_meta)
     output.write(tables, regions)
 

@@ -1,10 +1,11 @@
 import os.path
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import List
 import lxml.etree as et
+
 from ru_address import package_directory
 from ru_address.source.xml import Definition
+from ru_address.errors import UnknownPlatformError
 from ru_address.index import Index
 from ru_address.core import Core
 from ru_address.common import Common
@@ -15,9 +16,16 @@ class ConverterRegistry:
     Registered target platforms \\w linked converters.
     """
     @staticmethod
-    def get_converter(alias):
+    def get_converter(alias: str):
         available = ConverterRegistry.get_available_platforms()
         return available.get(alias, None)
+
+    @staticmethod
+    def init_converter(alias: str):
+        _converter = ConverterRegistry.get_converter(alias)
+        if _converter is None:
+            raise UnknownPlatformError()
+        return _converter()
 
     @staticmethod
     def get_available_platforms():
@@ -32,7 +40,12 @@ class BaseSchemaConverter(ABC):
     """
     Base converter for target platforms
     """
-    def process(self, source_path: str, tables: List[str], include_keys: bool):
+    def __init__(self, schema_stylesheet_file, index_stylesheet_file, options: dict):
+        self.schema_stylesheet_file = schema_stylesheet_file
+        self.index_stylesheet_file = index_stylesheet_file
+        self.options = options
+
+    def process(self, source_path: str, tables: list[str], include_keys: bool):
         output = OrderedDict()
         definitions = self.generate_definitions(source_path, Core.KNOWN_ENTITIES)
         known_tables = Core.get_known_tables()
@@ -44,18 +57,30 @@ class BaseSchemaConverter(ABC):
         return output
 
     @staticmethod
-    def generate_definitions(source_path: str, entities: List[str]):
+    def generate_definitions(source_path: str, entities: list[str]):
         output = OrderedDict()
         for entity in entities:
-            print(entity)
+            Common.cli_output(entity)
             source_file = Common.get_source_filepath(source_path, entity, 'xsd')
             definition = Definition(entity, source_file)
             output[entity] = definition
         return output
 
-    @abstractmethod
     def convert_table(self, definition: Definition, table_name: str, include_keys: bool):
-        pass
+        stylesheet = et.parse(self.schema_stylesheet_file)
+        transform = et.XSLT(stylesheet)
+
+        # Template variables
+        options = self.options.copy()
+        options['table_name'] = table_name
+        options['index'] = None
+        if include_keys:
+            options['index'] = Index(self.index_stylesheet_file).build(definition.title_name)
+
+        for k, v in options.items():
+            options[k] = transform.strparam(v)
+        result = transform(definition.tree, **options)
+        return str(result)
 
     @staticmethod
     @abstractmethod
@@ -68,23 +93,15 @@ class MyConverter(BaseSchemaConverter):
     MySQL (and MySQL forks) compatible converter
     """
     def __init__(self):
-        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'mysql.schema.xsl')
-        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'mysql.index.xsl')
-
-    def convert_table(self, definition: Definition, table_name: str, include_keys: bool):
-        stylesheet = et.parse(self.schema_stylesheet_file)
-        transform = et.XSLT(stylesheet)
-
-        plain_table_name = transform.strparam(table_name)
-        index = None
-        if include_keys:
-            index = transform.strparam(Index(self.index_stylesheet_file).build(definition.title_name))
-        # TODO: Add INCLUDE_DROP param
-        # TODO: Add TABLE_ENGINE param
-        # TODO: Add TABLE_ENCODING param
-        result = transform(definition.tree, table_name=plain_table_name, index=index)
-
-        return str(result)
+        BaseSchemaConverter.__init__(
+            self,
+            os.path.join(package_directory, 'resources', 'templates', 'mysql.schema.xsl'),
+            os.path.join(package_directory, 'resources', 'templates', 'mysql.index.xsl'),
+            {
+                "include_drop": os.environ.get("RA_INCLUDE_DROP", "1"),
+                "table_engine": os.environ.get("RA_TABLE_ENGINE", "MyISAM"),
+            }
+        )
 
     @staticmethod
     def get_extension() -> str:
@@ -96,23 +113,14 @@ class PostgresConverter(BaseSchemaConverter):
     PostgreSQL compatible converter
     """
     def __init__(self):
-        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'postgres.schema.xsl')
-        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'postgres.index.xsl')
-
-    def convert_table(self, definition: Definition, table_name: str, include_keys: bool):
-        stylesheet = et.parse(self.schema_stylesheet_file)
-        transform = et.XSLT(stylesheet)
-
-        plain_table_name = transform.strparam(table_name)
-        index = None
-        if include_keys:
-            index = transform.strparam(Index(self.index_stylesheet_file).build(definition.title_name))
-        # TODO: Add INCLUDE_DROP param
-        # TODO: Add TABLE_ENGINE param
-        # TODO: Add TABLE_ENCODING param
-        result = transform(definition.tree, table_name=plain_table_name, index=index)
-
-        return str(result)
+        BaseSchemaConverter.__init__(
+            self,
+            os.path.join(package_directory, 'resources', 'templates', 'postgres.schema.xsl'),
+            os.path.join(package_directory, 'resources', 'templates', 'postgres.index.xsl'),
+            {
+                "include_drop": os.environ.get("RA_INCLUDE_DROP", "1"),
+            }
+        )
 
     @staticmethod
     def get_extension() -> str:
@@ -124,24 +132,15 @@ class ClickhouseConverter(BaseSchemaConverter):
     Clickhouse compatible converter
     """
     def __init__(self):
-        self.schema_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'clickhouse.schema.xsl')
-        self.index_stylesheet_file = os.path.join(package_directory, 'resources', 'templates', 'clickhouse.index.xsl')
-
-    def convert_table(self, definition: Definition, table_name: str, include_keys: bool):
-        stylesheet = et.parse(self.schema_stylesheet_file)
-        transform = et.XSLT(stylesheet)
-
-        plain_table_name = transform.strparam(table_name)
-        index = None
-
-        if include_keys:
-            index = transform.strparam(Index(self.index_stylesheet_file).build(definition.title_name))
-        # TODO: Add INCLUDE_DROP param
-        # TODO: Add TABLE_ENGINE param
-        # TODO: Add TABLE_ENCODING param
-        result = transform(definition.tree, table_name=plain_table_name, index=index)
-
-        return str(result)
+        BaseSchemaConverter.__init__(
+            self,
+            os.path.join(package_directory, 'resources', 'templates', 'clickhouse.schema.xsl'),
+            os.path.join(package_directory, 'resources', 'templates', 'clickhouse.index.xsl'),
+            {
+                "include_drop": os.environ.get("RA_INCLUDE_DROP", "1"),
+                "table_engine": os.environ.get("RA_TABLE_ENGINE", "MergeTree"),
+            }
+        )
 
     @staticmethod
     def get_extension() -> str:

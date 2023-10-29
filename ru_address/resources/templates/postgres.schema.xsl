@@ -5,9 +5,12 @@
     <!-- From XSLT processor -->
     <xsl:param name="table_name" />
     <xsl:param name="index" />
+    <xsl:param name="include_drop" />
     
     <xsl:template match="/">
-        <xsl:text>DROP TABLE IF EXISTS "</xsl:text><xsl:value-of select="$table_name"/><xsl:text>";&#xa;</xsl:text>
+        <xsl:if test="$include_drop = '1'">
+            <xsl:text>DROP TABLE IF EXISTS "</xsl:text><xsl:value-of select="$table_name"/><xsl:text>";&#xa;</xsl:text>
+        </xsl:if>
         <xsl:text>CREATE TABLE "</xsl:text><xsl:value-of select="$table_name"/><xsl:text>" (&#xa;</xsl:text>
         <xsl:for-each select=".//xs:complexType[1]/xs:attribute">
             <!-- Column -->

@@ -43,6 +43,7 @@ class ConverterRegistry:
     def get_available_platforms_list() -> list:
         return list(ConverterRegistry.get_available_platforms().keys())
 
+
 class BaseDumpConverter(ABC):
     """
     Base converter for platform
@@ -118,8 +119,15 @@ class MyConverter(BaseDumpConverter):
                 f'INSERT INTO `{table_name}` (`{field_query}`) VALUES \n'
             )
 
+        # Escape backslash and value quotes
+        # ...NAME="ИФНС &quot;ФЛ&quot;\"... -> ..."ИФНС \"ФЛ\"\\"...
+        escape = {
+            "\\": "\\\\",
+            "\"": "\\\""
+        }
+
         return TableRepresentation(table_start_handler=table_start_handler, table_end_handler=table_end_handler,
-                                   batch_start_handler=batch_start_handler)
+                                   batch_start_handler=batch_start_handler, escape=escape)
 
     def compose_dump_header(self) -> str:
         """ Подготовка к импорту """
@@ -153,7 +161,15 @@ class PostgresConverter(BaseDumpConverter):
                 f'INSERT INTO "{table_name}" ("{field_query}") VALUES \n'
             )
 
-        return TableRepresentation(quotes="'", bool_repr=("'0'", "'1'"), batch_start_handler=batch_start_handler)
+        # Escape backslash and value quotes
+        # ...NAME="ИФНС 'ФЛ'\"... -> ...'ИФНС \'ФЛ\'\\'...
+        escape = {
+            "\\": "\\\\",
+            "\'": "\\\'"
+        }
+
+        return TableRepresentation(quotes="'", bool_repr=("'0'", "'1'"), batch_start_handler=batch_start_handler,
+                                   escape=escape)
 
     def compose_dump_header(self) -> str:
         return ""
@@ -173,9 +189,16 @@ class PlainCommaConverter(BaseDumpConverter):
 
     @staticmethod
     def get_representation() -> TableRepresentation:
+        # Escape backslash and value quotes
+        # ...NAME="ИФНС &quot;ФЛ&quot;\"... -> ..."ИФНС \"ФЛ\"\\"...
+        escape = {
+            "\\": "\\\\",
+            "\"": "\\\""
+        }
+
         return TableRepresentation(quotes="\"", delimiter=",", null_repr="\\N",
                                    row_indent="", row_parentheses=("", ""),
-                                   line_ending="\n", line_ending_last="\n")
+                                   line_ending="\n", line_ending_last="\n", escape=escape)
 
     def compose_dump_header(self) -> str:
         return ""
@@ -195,9 +218,16 @@ class PlainTabConverter(BaseDumpConverter):
 
     @staticmethod
     def get_representation() -> TableRepresentation:
+        # Escape backslash and tab character
+        # ...NAME="ИФНС&#009;ФЛ\"... -> ..."ИФНС ФЛ\\"...
+        escape = {
+            "\\": "\\\\",
+            "\t": " "  # ИМХО табов в значениях вообще не должно быть
+        }
+
         return TableRepresentation(quotes="", delimiter="\t", null_repr="\\N",
                                    row_indent="", row_parentheses=("", ""),
-                                   line_ending="\n", line_ending_last="\n")
+                                   line_ending="\n", line_ending_last="\n", escape=escape)
 
     def compose_dump_header(self) -> str:
         return ""

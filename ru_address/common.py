@@ -84,8 +84,8 @@ class DataSource:
 class TableRepresentation:
     """ Набор параметров для презентации табличных данных в виде текстового файла """
     def __init__(self, quotes="\"", quotes_system="`", delimiter=", ", row_indent="\t", row_parentheses=("(", ")"),
-                 line_ending=',\n', line_ending_last=';\n', bool_repr=('0', '1'), null_repr="NULL", escape=(),
-                 table_start_handler=None, table_end_handler=None,  batch_start_handler=None):
+                 line_ending=',\n', line_ending_last=';\n', bool_repr=('0', '1'), null_repr="NULL", escape=None,
+                 table_start_handler=None, table_end_handler=None, batch_start_handler=None):
         self.quotes = quotes
         self.quotes_system = quotes_system
         self.delimiter = delimiter
@@ -95,7 +95,9 @@ class TableRepresentation:
         self.line_ending_last = line_ending_last
         self.bool_repr = bool_repr
         self.null_repr = null_repr
-        self.escape = escape
+        self.escape = None
+        if isinstance(escape, dict):
+            self.escape = str.maketrans(escape)
         self.table_start_handler = table_start_handler
         self.table_end_handler = table_end_handler
         self.batch_start_handler = batch_start_handler

@@ -31,9 +31,9 @@ class Data:
                     elif value == "true":
                         value = self.table_representation.bool_repr[1]
                     else:
-                        # SAX автоматически декодирует XML сущности, ломая запрос кавычками, workaround
-                        # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
-                        # value = value.replace('\\', '\\\\"').replace('"', '\\"')  # TODO Quotes
+                        # SAX автоматически декодирует XML сущности, в значении могут быть кавычки и вообще что угодно
+                        if self.table_representation.escape is not None:
+                            value = value.translate(self.table_representation.escape)
                         value = f'{self.table_representation.quotes}{value}{self.table_representation.quotes}'
                 value_query_parts.append(value)
 

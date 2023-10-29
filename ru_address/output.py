@@ -2,13 +2,22 @@ import os
 from abc import ABC, abstractmethod
 from ru_address.core import Core
 from ru_address.common import Common
+from ru_address.dump import BaseDumpConverter
+from ru_address.errors import UnknownPlatformError
 
 
 class OutputRegistry:
     @staticmethod
-    def get_output(alias):
+    def get_output(alias: str):
         available = OutputRegistry.get_available_modes()
         return available.get(alias, None)
+
+    @staticmethod
+    def init_output(alias: str, converter: BaseDumpConverter, output_path: str, include_meta: bool):
+        _output = OutputRegistry.get_output(alias)
+        if _output is None:
+            raise UnknownPlatformError()
+        return _output(converter, output_path, include_meta)
 
     @staticmethod
     def get_available_modes():

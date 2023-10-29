@@ -86,11 +86,6 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
     if not os.path.isdir(output_path):
         mode = 'direct'
 
-    output_registry = OutputRegistry()
-    _output = output_registry.get_output(mode)
-    if _output is None:
-        raise UnknownPlatformError()
-
     include_meta = True
     if target in ['csv', 'tsv']:
         include_meta = False
@@ -98,7 +93,7 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
             raise UnknownPlatformError("Cant mix multiple tables in single file")
 
     converter = DumpConverterRegistry.init_converter(target, source_path, schema_path)
-    output = _output(converter, output_path, include_meta)
+    output = OutputRegistry.init_output(mode, converter, output_path, include_meta)
     output.write(tables, regions)
 
 

@@ -42,13 +42,9 @@ def schema(target, tables, no_keys, source_path, output_path):
     """
     Convert XSD schema into target platform definitions.
     Get latest schema @ https://fias.nalog.ru/docs/gar_schemas.zip
+    Generate file per table if output_path is existing directory; else dumps all tables into single file.
     """
-    registry = SchemaConverterRegistry()
-    _converter = registry.get_converter(target)
-    if _converter is None:
-        raise UnknownPlatformError()
-
-    converter = _converter()
+    converter = SchemaConverterRegistry.init_converter(target)
     output = converter.process(source_path, tables, not no_keys)
     if os.path.isdir(output_path):
         for key, value in output.items():

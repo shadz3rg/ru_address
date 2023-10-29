@@ -5,9 +5,13 @@
     <!-- From XSLT processor -->
     <xsl:param name="table_name" />
     <xsl:param name="index" />
+    <xsl:param name="include_drop" />
+    <xsl:param name="table_engine" />
     
     <xsl:template match="/">
-        <xsl:text>DROP TABLE IF EXISTS `</xsl:text><xsl:value-of select="$table_name"/><xsl:text>`;&#xa;</xsl:text>
+        <xsl:if test="$include_drop = '1'">
+            <xsl:text>DROP TABLE IF EXISTS `</xsl:text><xsl:value-of select="$table_name"/><xsl:text>`;&#xa;</xsl:text>
+        </xsl:if>
         <xsl:text>CREATE TABLE `</xsl:text><xsl:value-of select="$table_name"/><xsl:text>` (&#xa;</xsl:text>
         <xsl:for-each select=".//xs:complexType[1]/xs:attribute" >
             <!-- Column -->
@@ -74,7 +78,7 @@
         </xsl:for-each>
 
         <!-- End of column definitions -->
-        <xsl:text>&#xa;) ENGINE = MergeTree </xsl:text>
+        <xsl:text>&#xa;) ENGINE = </xsl:text><xsl:value-of select="$table_engine" /><xsl:text> </xsl:text>
 
         <!-- Table comment -->
         <xsl:if test="/xs:schema/xs:element[1]/xs:annotation/xs:documentation">

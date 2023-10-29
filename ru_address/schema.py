@@ -28,13 +28,16 @@ class ConverterRegistry:
         return _converter()
 
     @staticmethod
-    def get_available_platforms():
+    def get_available_platforms() -> dict:
         return {
             'mysql': MyConverter,
             'psql':  PostgresConverter,
             'ch':    ClickhouseConverter,
         }
 
+    @staticmethod
+    def get_available_platforms_list() -> list:
+        return list(ConverterRegistry.get_available_platforms().keys())
 
 class BaseSchemaConverter(ABC):
     """

@@ -30,8 +30,8 @@ def cli(_, env):
 
 
 @cli.command()
-@click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms().keys()),
-              default='mysql', help='Target DB')
+@click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms_list()),
+              default='mysql', help='Target schema format')
 @click.option('-t', '--table', 'tables', type=str, multiple=True,
               default=Core.get_known_tables().keys(), help='Limit table list to process')
 @click.option('--no-keys', is_flag=True, help='Exclude keys && column index')
@@ -60,13 +60,13 @@ def schema(target, tables, no_keys, source_path, output_path):
 
 
 @click.command()
-@click.option('--target', type=click.Choice(DumpConverterRegistry.get_available_platforms().keys()),
+@click.option('--target', type=click.Choice(DumpConverterRegistry.get_available_platforms_list()),
               default='sql', help='Target dump format')
 @click.option('-r', '--region', 'regions', type=str, multiple=True,
               default=[], help='Limit region list to process')
 @click.option('-t', '--table', 'tables', type=str, multiple=True,
               default=Core.get_known_tables(), help='Limit table list to process')
-@click.option('-m', '--mode', type=click.Choice(OutputRegistry.get_available_modes().keys()),
+@click.option('-m', '--mode', type=click.Choice(OutputRegistry.get_available_modes_list()),
               default='region_tree', help='Only if output_path is valid directory')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))

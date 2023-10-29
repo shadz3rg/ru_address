@@ -8,4 +8,3 @@ class UnknownPlatformError(ApplicationError):
 
 class DefinitionError(ApplicationError):
     """ Ошибка при парсинге схемы таблицы """
-

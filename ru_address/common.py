@@ -6,7 +6,7 @@ import psutil
 
 
 class Common:
-    """Utils"""
+    """ Common application utils """
     @staticmethod
     def build_ngrams(keyword, n=3, filler="__"):
         keyword_w_filler = filler + keyword + filler
@@ -58,6 +58,7 @@ class Common:
 
 
 class DataSource:
+    """ Представление файла под SAX-reader """
     def __init__(self, filename):
         self.size = os.path.getsize(filename)
         self.delivered = 0
@@ -83,7 +84,7 @@ class DataSource:
 class TableRepresentation:
     """ Набор параметров для презентации табличных данных в виде текстового файла """
     def __init__(self, quotes="\"", quotes_system="`", delimiter=", ", row_indent="\t", row_parentheses=("(", ")"),
-                 line_ending=',\n', line_ending_last=';\n', bool_repr=('0', '1'), null_repr="NULL",
+                 line_ending=',\n', line_ending_last=';\n', bool_repr=('0', '1'), null_repr="NULL", escape=(),
                  table_start_handler=None, table_end_handler=None,  batch_start_handler=None):
         self.quotes = quotes
         self.quotes_system = quotes_system
@@ -94,7 +95,7 @@ class TableRepresentation:
         self.line_ending_last = line_ending_last
         self.bool_repr = bool_repr
         self.null_repr = null_repr
+        self.escape = escape
         self.table_start_handler = table_start_handler
         self.table_end_handler = table_end_handler
         self.batch_start_handler = batch_start_handler
-

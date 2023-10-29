@@ -39,6 +39,9 @@ class ConverterRegistry:
             'tsv':    PlainTabConverter,
         }
 
+    @staticmethod
+    def get_available_platforms_list() -> list:
+        return list(ConverterRegistry.get_available_platforms().keys())
 
 class BaseDumpConverter(ABC):
     """

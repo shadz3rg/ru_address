@@ -77,7 +77,8 @@ class RegionOutput(BaseOutput):
         for table_name in Core.COMMON_TABLE_LIST:
             if table_name in tables:
                 Common.cli_output(f'Processing table `{table_name}`')
-                f = open(os.path.join(self.output_path, f'{table_name}.sql',), "w", encoding='utf-8')
+                f = open(os.path.join(self.output_path, f'{table_name}.{self.converter.get_extension()}',), "w",
+                         encoding='utf-8')
                 if self.include_meta:
                     f.write(Core.compose_copyright())
                     f.write(self.converter.compose_dump_header())
@@ -90,7 +91,8 @@ class RegionOutput(BaseOutput):
                 f.close()
         for region in regions:
             Common.cli_output(f'Processing region directory `{region}`')
-            f = open(os.path.join(self.output_path, f'{region}.sql',), "w", encoding='utf-8')
+            f = open(os.path.join(self.output_path, f'{region}.{self.converter.get_extension()}',), "w",
+                     encoding='utf-8')
             if self.include_meta:
                 f.write(Core.compose_copyright())
                 f.write(self.converter.compose_dump_header())
@@ -114,7 +116,8 @@ class TableOutput(BaseOutput):
         for table_name in Core.COMMON_TABLE_LIST:
             if table_name in tables:
                 Common.cli_output(f'Processing table `{table_name}`')
-                f = open(os.path.join(self.output_path, f'{table_name}.sql'), "w", encoding='utf-8')
+                f = open(os.path.join(self.output_path, f'{table_name}.{self.converter.get_extension()}'), "w",
+                         encoding='utf-8')
                 if self.include_meta:
                     f.write(Core.compose_copyright())
                     f.write(self.converter.compose_dump_header())
@@ -127,7 +130,8 @@ class TableOutput(BaseOutput):
         for table_name in Core.REGION_TABLE_LIST:
             if table_name in tables:
                 Common.cli_output(f'Processing table `{table_name}`')
-                f = open(os.path.join(self.output_path, f'{table_name}.sql', ), "w", encoding='utf-8')
+                f = open(os.path.join(self.output_path, f'{table_name}.{self.converter.get_extension()}', ), "w",
+                         encoding='utf-8')
                 if self.include_meta:
                     f.write(Core.compose_copyright())
                     f.write(self.converter.compose_dump_header())
@@ -149,7 +153,8 @@ class RegionTreeOutput(BaseOutput):
         for table_name in Core.COMMON_TABLE_LIST:
             if table_name in tables:
                 Common.cli_output(f'Processing table `{table_name}`')
-                f = open(os.path.join(self.output_path, f'{table_name}.sql'), "w", encoding='utf-8')
+                f = open(os.path.join(self.output_path, f'{table_name}.{self.converter.get_extension()}'), "w",
+                         encoding='utf-8')
                 if self.include_meta:
                     f.write(Core.compose_copyright())
                     f.write(self.converter.compose_dump_header())
@@ -166,7 +171,8 @@ class RegionTreeOutput(BaseOutput):
             for table_name in Core.REGION_TABLE_LIST:
                 if table_name in tables:
                     Common.cli_output(f'Processing table `{table_name}`')
-                    f = open(os.path.join(self.output_path, region, f'{table_name}.sql', ), "w", encoding='utf-8')
+                    f = open(os.path.join(self.output_path, region, f'{table_name}.{self.converter.get_extension()}', ),
+                             "w", encoding='utf-8')
                     if self.include_meta:
                         f.write(Core.compose_copyright())
                         f.write(self.converter.compose_dump_header())

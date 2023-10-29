@@ -75,7 +75,7 @@ class BaseSchemaConverter(ABC):
         options['table_name'] = table_name
         options['index'] = None
         if include_keys:
-            options['index'] = Index(self.index_stylesheet_file).build(definition.title_name)
+            options['index'] = Index(self.index_stylesheet_file).build(table_name)
 
         for k, v in options.items():
             options[k] = transform.strparam(v)

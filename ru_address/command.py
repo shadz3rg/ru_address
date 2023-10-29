@@ -22,7 +22,7 @@ def command_summary(f):
 
 @click.group(invoke_without_command=True, no_args_is_help=True)
 @click.version_option(__version__)
-@click.option("-e", "--env", type=(str, str), multiple=True, help='Pass env-params')
+@click.option("-e", "--env", type=(str, str), multiple=True, help='Pass ENV params')
 @click.pass_context
 def cli(_, env):
     for k, v in env:
@@ -39,10 +39,11 @@ def cli(_, env):
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
 @command_summary
 def schema(target, tables, no_keys, source_path, output_path):
-    """
-    Convert XSD schema into target platform definitions.
-    Get latest schema @ https://fias.nalog.ru/docs/gar_schemas.zip
-    Generate file per table if output_path is existing directory; else dumps all tables into single file.
+    """\b
+    Convert XSD content into target platform schema definitions.
+    Get latest schema at https://fias.nalog.ru/docs/gar_schemas.zip
+    Generate file per table if `output_path` argument is existing directory;
+    else dumps all tables into single file.
     """
     converter = SchemaConverterRegistry.init_converter(target)
     output = converter.process(source_path, tables, not no_keys)
@@ -67,14 +68,15 @@ def schema(target, tables, no_keys, source_path, output_path):
 @click.option('-t', '--table', 'tables', type=str, multiple=True,
               default=Core.get_known_tables(), help='Limit table list to process')
 @click.option('-m', '--mode', type=click.Choice(OutputRegistry.get_available_modes_list()),
-              default='region_tree', help='Only if output_path is valid directory')
+              default='region_tree', help='Dump output mode (only if `output_path` argument is a valid directory)')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
 @click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), required=False)
 @command_summary
 def dump(target, regions, tables, mode, source_path, output_path, schema_path):
-    """
-    Convert tables content into target platform dump file.
+    """\b
+    Convert XML content into target platform dump files.
+    Get latest data at https://fias.nalog.ru/Frontend
     """
     if schema_path is None:
         schema_path = source_path

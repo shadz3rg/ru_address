@@ -39,6 +39,7 @@ class ConverterRegistry:
     def get_available_platforms_list() -> list:
         return list(ConverterRegistry.get_available_platforms().keys())
 
+
 class BaseSchemaConverter(ABC):
     """
     Base converter for target platforms

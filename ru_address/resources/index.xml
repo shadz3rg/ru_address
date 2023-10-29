@@ -1,8 +1,38 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <database>
+    <!-- Common tables -->
     <table id="ADDHOUSE_TYPES">
         <primary-key field="ID"/>
     </table>
+    <table id="ADDR_OBJ_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="APARTMENT_TYPES">
+        <primary-key field="ID"/>
+    </table>
+     <table id="HOUSE_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="NORMATIVE_DOCS_KINDS">
+        <primary-key field="ID"/>
+    </table>
+    <table id="NORMATIVE_DOCS_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="OBJECT_LEVELS">
+        <primary-key field="LEVEL"/>
+    </table>
+    <table id="OPERATION_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="PARAM_TYPES">
+        <primary-key field="ID"/>
+    </table>
+    <table id="ROOM_TYPES">
+        <primary-key field="ID"/>
+    </table>
+
+     <!-- Region tables -->
     <table id="ADDR_OBJ">
         <primary-key field="ID"/>
     </table>
@@ -12,13 +42,7 @@
     <table id="ADDR_OBJ_PARAMS">
         <primary-key field="ID"/>
     </table>
-    <table id="ADDR_OBJ_TYPES">
-        <primary-key field="ID"/>
-    </table>
     <table id="ADM_HIERARCHY">
-        <primary-key field="ID"/>
-    </table>
-    <table id="APARTMENT_TYPES">
         <primary-key field="ID"/>
     </table>
     <table id="APARTMENTS">
@@ -34,10 +58,7 @@
         <primary-key field="ID"/>
     </table>
     <table id="CHANGE_HISTORY">
-
-    </table>
-    <table id="HOUSE_TYPES">
-        <primary-key field="ID"/>
+        <primary-key field="CHANGEID"/>
     </table>
     <table id="HOUSES">
         <primary-key field="ID"/>
@@ -51,26 +72,8 @@
     <table id="NORMATIVE_DOCS">
         <primary-key field="ID"/>
     </table>
-    <table id="NORMATIVE_DOCS_KINDS">
-        <primary-key field="ID"/>
-    </table>
-    <table id="NORMATIVE_DOCS_TYPES">
-        <primary-key field="ID"/>
-    </table>
-    <table id="OBJECT_LEVELS">
-
-    </table>
-    <table id="OPERATION_TYPES">
-        <primary-key field="ID"/>
-    </table>
-    <table id="PARAM_TYPES">
-        <primary-key field="ID"/>
-    </table>
     <table id="REESTR_OBJECTS">
-
-    </table>
-    <table id="ROOM_TYPES">
-        <primary-key field="ID"/>
+        <primary-key field="OBJECTID"/>
     </table>
     <table id="ROOMS">
         <primary-key field="ID"/>

@@ -20,13 +20,17 @@ class OutputRegistry:
         return _output(converter, output_path, include_meta)
 
     @staticmethod
-    def get_available_modes():
+    def get_available_modes() -> dict:
         return {
             'direct':       DirectOutput,
             'per_region':   RegionOutput,
             'per_table':    TableOutput,
             'region_tree':  RegionTreeOutput,
         }
+
+    @staticmethod
+    def get_available_modes_list() -> list:
+        return list(OutputRegistry.get_available_modes().keys())
 
 
 class BaseOutput(ABC):

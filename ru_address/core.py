@@ -3,6 +3,8 @@ from ru_address import __version__
 
 
 class Core:
+    """ Базовая информация по структуре ГАР """
+
     KNOWN_ENTITIES = [
         'ADDR_OBJ',
         'ADDR_OBJ_DIVISION',

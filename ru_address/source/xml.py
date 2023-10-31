@@ -1,30 +1,18 @@
-import math
-import xml.sax
 import lxml.etree as et
-from ru_address.common import Common
-from ru_address.common import DataSource
+from ru_address.common import TableRepresentation
 from ru_address.errors import DefinitionError
 
 
 class Data:
-    """XML data file handler"""
-    def __init__(self, table_name, source_file):
+    """ Конвертирует XML данные в настраиваемый текстовый формат """
+    def __init__(self, table_name, source_file, table_representation: TableRepresentation):
         self.table_name = table_name
         self.data_source = source_file
+        self.table_representation = table_representation
 
     def convert_and_dump(self, dump_file, definition, bulk_size):
-        source = DataSource(self.data_source)
-        parser = xml.sax.make_parser()
-        parser.setContentHandler(DataHandler(self.table_name, source, dump_file,
-                                             definition.get_table_fields(), bulk_size))
-        parser.parse(source)
-
-        source.close()
-
-    def convert_and_dump_v2(self, dump_file, definition, bulk_size):
-
-        # Отключаем ключи перед началом импорта данных
-        print(f'/*!40000 ALTER TABLE `{self.table_name}` DISABLE KEYS */;', file=dump_file)
+        if self.table_representation.table_start_handler:
+            dump_file.write(self.table_representation.table_start_handler(self.table_name))
 
         table_fields = definition.get_table_fields()
         current_row = 0
@@ -35,39 +23,42 @@ class Data:
 
             value_query_parts = []
             for field in table_fields:
-                # SAX автоматически декодирует XML сущности, ломая запрос кавычками, workaround
-                # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
-                value = "NULL"
+                value = self.table_representation.null_repr
                 if elem.get(field) is not None:
                     value = elem.get(field)
-                    if value == "true":
-                        value = "1"
-                    elif value == "false":
-                        value = "0"
+                    if value == "false":
+                        value = self.table_representation.bool_repr[0]
+                    elif value == "true":
+                        value = self.table_representation.bool_repr[1]
                     else:
-                        value = value.replace('\\', '\\\\"').replace('"', '\\"')
-                        value = f'"{value}"'
+                        # SAX автоматически декодирует XML сущности, в значении могут быть кавычки и вообще что угодно
+                        if self.table_representation.escape is not None:
+                            value = value.translate(self.table_representation.escape)
+                        value = f'{self.table_representation.quotes}{value}{self.table_representation.quotes}'
                 value_query_parts.append(value)
 
-            value_query = ', '.join(value_query_parts)
+            value_query = self.table_representation.delimiter.join(value_query_parts)
 
             # Формируем запрос
             until_new_bulk = current_row % bulk_size
 
             # Заканчиваем предыдущую строку
             if current_row != 0:
-                line_ending = ',\n'
+                line_ending = self.table_representation.line_ending
                 if until_new_bulk == 0:
-                    line_ending = ';\n'
+                    line_ending = self.table_representation.line_ending_last
                 content.append(line_ending)
 
             # Начинаем новый инсерт, если нужно
             if current_row == 0 or until_new_bulk == 0:
-                field_query = "`, `".join(table_fields)
-                content.append(f'INSERT INTO `{self.table_name}` (`{ field_query}`) VALUES \n')
+                if self.table_representation.batch_start_handler:
+                    content.append(self.table_representation.batch_start_handler(self.table_name, table_fields))
 
             # Данные для вставки, подходящий delimiter ставится у следующей записи
-            content.append(f'\t({value_query})')
+            content.append(f'{self.table_representation.row_indent}'
+                           f'{self.table_representation.row_parentheses[0]}'
+                           f'{value_query}'
+                           f'{self.table_representation.row_parentheses[1]}')
 
             current_row += 1
             if current_row % 10000 == 0:
@@ -82,91 +73,14 @@ class Data:
         # Завершаем файл
         print("")  # Перенос после прогресс-бара
         if current_row != 0:
-            print(";", file=dump_file)  # Заканчиваем последний INSERT запрос
-        # Вспомогательные запросы на манер бэкапов из phpMyAdmin
-        print(f'/*!40000 ALTER TABLE `{self.table_name}` ENABLE KEYS */;', file=dump_file)
+            dump_file.write(self.table_representation.line_ending_last)  # Заканчиваем последний INSERT запрос
 
-
-class DataHandler(xml.sax.handler.ContentHandler):
-    """XML data content handler"""
-    def __init__(self, table_name, source, dump, table_fields, bulk_size):
-        super().__init__()
-        self.table_name = table_name
-        self.source = source
-        self.dump = dump
-        self.table_fields = table_fields
-        self.bulk_size = bulk_size
-
-        # Отключаем ключи перед началом импорта данных
-        print(f'/*!40000 ALTER TABLE `{self.table_name}` DISABLE KEYS */;', file=self.dump)
-
-        # Для XML обработчика
-        self.tree_depth = 0
-        self.current_row = 0
-        self.processed_percent = 0
-
-    def startElement(self, name, attrs):
-        # Псевдо-дерево, нужно пропустить корневой элемент
-        if self.tree_depth == 0:
-            self.tree_depth += 1
-            return
-
-        self.tree_depth += 1
-
-        # Подготавливаем поля
-        value_query_parts = []
-        for field in self.table_fields:
-            # SAX автоматически декодирует XML сущности, ломая запрос кавычками, workaround
-            # Достаточно удалить двойные т.к. в них оборачиваются SQL данные
-            value = "NULL"
-            if attrs.get(field) is not None:
-                value = attrs.get(field).replace('\\', '\\\\"').replace('"', '\\"')
-                value = f'"{value}"'
-            value_query_parts.append(value)
-
-        value_query = ', '.join(value_query_parts)
-
-        # Формируем запрос
-        until_new_bulk = self.current_row % self.bulk_size
-
-        # Заканчиваем предыдущую строку
-        if self.current_row != 0:
-            line_ending = ', '
-            if until_new_bulk == 0:
-                line_ending = '; '
-            print(line_ending, file=self.dump)
-
-        # Начинаем новый инсерт, если нужно
-        if self.current_row == 0 or until_new_bulk == 0:
-            field_query = "`, `".join(self.table_fields)
-            print(f'INSERT INTO `{self.table_name}` (`{field_query}`) VALUES ', file=self.dump)
-
-        # Данные для вставки, подходящий delimiter ставится у следующей записи
-        print(f'\t({value_query})', file=self.dump, end="")
-
-        self.current_row += 1
-
-
-        # Вывод прогресса
-        current_percent = math.ceil(self.source.percentage)
-        if current_percent > self.processed_percent:
-            Common.update_progress(current_percent / 100)
-
-        self.processed_percent = current_percent
-
-    def endElement(self, name):
-        self.tree_depth -= 1
-
-    def endDocument(self):
-        Common.update_progress(1)
-        print("")  # Перенос после прогресс-бара
-        print(";", file=self.dump)  # Заканчиваем последний INSERT запрос
-        # Вспомогательные запросы на манер бэкапов из phpMyAdmin
-        print(f'/*!40000 ALTER TABLE `{self.table_name}` ENABLE KEYS */;', file=self.dump)
+        if self.table_representation.table_end_handler:
+            dump_file.write(self.table_representation.table_end_handler(self.table_name))
 
 
 class Definition:
-    """XML table schema handler"""
+    """ Представление XML схемы для разбора данных """
     def __init__(self, title_name, source_file):
         self.title_name = title_name
         self.tree = et.parse(source_file)

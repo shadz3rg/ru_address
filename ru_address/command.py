@@ -22,7 +22,7 @@ def command_summary(f):
 
 @click.group(invoke_without_command=True, no_args_is_help=True)
 @click.version_option(__version__)
-@click.option("-e", "--env", type=(str, str), multiple=True, help='Pass env-params')
+@click.option("-e", "--env", type=(str, str), multiple=True, help='Pass ENV params')
 @click.pass_context
 def cli(_, env):
     for k, v in env:
@@ -30,8 +30,8 @@ def cli(_, env):
 
 
 @cli.command()
-@click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms().keys()),
-              default='mysql', help='Target DB')
+@click.option('--target', type=click.Choice(SchemaConverterRegistry.get_available_platforms_list()),
+              default='mysql', help='Target schema format')
 @click.option('-t', '--table', 'tables', type=str, multiple=True,
               default=Core.get_known_tables().keys(), help='Limit table list to process')
 @click.option('--no-keys', is_flag=True, help='Exclude keys && column index')
@@ -39,16 +39,13 @@ def cli(_, env):
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
 @command_summary
 def schema(target, tables, no_keys, source_path, output_path):
+    """\b
+    Convert XSD content into target platform schema definitions.
+    Get latest schema at https://fias.nalog.ru/docs/gar_schemas.zip
+    Generate file per table if `output_path` argument is existing directory;
+    else dumps all tables into single file.
     """
-    Convert XSD schema into target platform definitions.
-    Get latest schema @ https://fias.nalog.ru/docs/gar_schemas.zip
-    """
-    registry = SchemaConverterRegistry()
-    _converter = registry.get_converter(target)
-    if _converter is None:
-        raise UnknownPlatformError()
-
-    converter = _converter()
+    converter = SchemaConverterRegistry.init_converter(target)
     output = converter.process(source_path, tables, not no_keys)
     if os.path.isdir(output_path):
         for key, value in output.items():
@@ -64,21 +61,22 @@ def schema(target, tables, no_keys, source_path, output_path):
 
 
 @click.command()
-@click.option('--target', type=click.Choice(DumpConverterRegistry.get_available_platforms().keys()),
+@click.option('--target', type=click.Choice(DumpConverterRegistry.get_available_platforms_list()),
               default='sql', help='Target dump format')
 @click.option('-r', '--region', 'regions', type=str, multiple=True,
               default=[], help='Limit region list to process')
 @click.option('-t', '--table', 'tables', type=str, multiple=True,
               default=Core.get_known_tables(), help='Limit table list to process')
-@click.option('-m', '--mode', type=click.Choice(OutputRegistry.get_available_modes().keys()),
-              default='region_tree', help='Only if output_path is valid directory')
+@click.option('-m', '--mode', type=click.Choice(OutputRegistry.get_available_modes_list()),
+              default='region_tree', help='Dump output mode (only if `output_path` argument is a valid directory)')
 @click.argument('source_path', type=click.types.Path(exists=True, file_okay=False, readable=True))
 @click.argument('output_path', type=click.types.Path(file_okay=True, readable=True, writable=True))
 @click.argument('schema_path', type=click.types.Path(exists=True, file_okay=False, readable=True), required=False)
 @command_summary
 def dump(target, regions, tables, mode, source_path, output_path, schema_path):
-    """
-    Convert tables content into target platform dump file.
+    """\b
+    Convert XML content into target platform dump files.
+    Get latest data at https://fias.nalog.ru/Frontend
     """
     if schema_path is None:
         schema_path = source_path
@@ -86,22 +84,18 @@ def dump(target, regions, tables, mode, source_path, output_path, schema_path):
     if len(regions) == 0:
         regions = regions_from_directory(source_path)
 
-    converter_registry = DumpConverterRegistry()
-    _converter = converter_registry.get_converter(target)
-    if _converter is None:
-        raise UnknownPlatformError()
-    converter = _converter(source_path, schema_path)
-
     #
     if not os.path.isdir(output_path):
         mode = 'direct'
 
-    output_registry = OutputRegistry()
-    _output = output_registry.get_output(mode)
-    if _output is None:
-        raise UnknownPlatformError()
-    print(_output)
-    output = _output(converter, output_path)
+    include_meta = True
+    if target in ['csv', 'tsv']:
+        include_meta = False
+        if mode != 'region_tree':
+            raise UnknownPlatformError("Cant mix multiple tables in single file")
+
+    converter = DumpConverterRegistry.init_converter(target, source_path, schema_path)
+    output = OutputRegistry.init_output(mode, converter, output_path, include_meta)
     output.write(tables, regions)
 
 

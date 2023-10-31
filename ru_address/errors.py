@@ -1,11 +1,10 @@
-
 class ApplicationError(Exception):
-    pass
+    """ Базовая ошибка приложения """
 
 
 class UnknownPlatformError(ApplicationError):
-    pass
+    """ Ошибка при запросе несуществующей целевой платформы """
 
 
 class DefinitionError(ApplicationError):
-    pass
+    """ Ошибка при парсинге схемы таблицы """

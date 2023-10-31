@@ -222,7 +222,9 @@ class PlainTabConverter(BaseDumpConverter):
         # ...NAME="ИФНС&#009;ФЛ\"... -> ..."ИФНС ФЛ\\"...
         escape = {
             "\\": "\\\\",
-            "\t": " "  # ИМХО табов в значениях вообще не должно быть
+            "\r": "\\r",
+            "\n": "\\n",
+            "\t": "\\t"
         }
 
         return TableRepresentation(quotes="", delimiter="\t", null_repr="\\N",

@@ -1,1 +1,2 @@
 include ru_address/resources/*
+include ru_address/resources/templates/*

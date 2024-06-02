@@ -100,7 +100,7 @@ class Definition:
 
     def _fetch_collection_tag(self):
         namespace = {'xs': 'http://www.w3.org/2001/XMLSchema'}
-        element = self.tree.find("/xs:element[@name]", namespace)
+        element = self.tree.find("./xs:element[@name]", namespace)
         return element.attrib['name']
 
     def _fetch_entity_tag(self):

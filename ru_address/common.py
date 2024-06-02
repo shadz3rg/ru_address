@@ -47,9 +47,12 @@ class Common:
     def get_source_filepath(source_path, table, extension):
         """ Ищем файл таблицы в папке с исходниками,
         Названия файлов в непонятном формате, например AS_ACTSTAT_2_250_08_04_01_01.xsd"""
-        file = f'AS_{table}_2*.{extension}'
-        file_path = os.path.join(source_path, file)
-        found_files = glob.glob(file_path)
+        found_files = []
+        for _extension in [extension.lower(), extension.upper()]:
+            file = f'AS_{table}_2*.{_extension}'
+            file_path = os.path.join(source_path, file)
+            found_files = found_files + glob.glob(file_path)
+
         if len(found_files) == 1:
             return found_files[0]
         if len(found_files) > 1:

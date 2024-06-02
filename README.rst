@@ -1,5 +1,5 @@
 ru_address: обработка БД ГАР (ex. ФИАС/КЛАДР)
-==========================================
+=============================================
 
 | Утилита для конвертации схемы, ключей и данных выгрузки ГАР под импорт в БД **MySQL/PostgreSQL/ClickHouse**.
 Благодаря SAX парсеру потребляет небольшое количество ресурсов (не более 50 мб памяти).
@@ -9,7 +9,9 @@ ru_address: обработка БД ГАР (ex. ФИАС/КЛАДР)
 Требуется Python 3.6+
 ::
 
-    $ git clone https://github.com/shadz3rg/ru_address.git && cd ru_address && python setup.py install
+    $ git clone https://github.com/shadz3rg/ru_address.git && cd ru_address 
+    $ # deprecated python setup.py install
+    $ ~/.local/bin/pip install .
 
 Использование
 -------------

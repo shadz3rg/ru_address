@@ -62,7 +62,7 @@ def schema(target, tables, no_keys, source_path, output_path):
 
 @click.command()
 @click.option('--target', type=click.Choice(DumpConverterRegistry.get_available_platforms_list()),
-              default='sql', help='Target dump format')
+              default='psql', help='Target dump format')
 @click.option('-r', '--region', 'regions', type=str, multiple=True,
               default=[], help='Limit region list to process')
 @click.option('-t', '--table', 'tables', type=str, multiple=True,

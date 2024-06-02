@@ -9,7 +9,9 @@ ru_address: обработка БД ГАР (ex. ФИАС/КЛАДР)
 Требуется Python 3.6+
 ::
 
-    $ git clone https://github.com/shadz3rg/ru_address.git && cd ru_address && python setup.py install
+    $ git clone https://github.com/shadz3rg/ru_address.git && cd ru_address 
+    $ # deprecated python setup.py install
+    $ ~/.local/bin/pip install .
 
 Использование
 -------------
